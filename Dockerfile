@@ -18,4 +18,4 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
 # copy the build app from the build stage to the final stage
 COPY --from=build /app ./
-ENTRYPOINT ["dotnet", "Project4Backend.Api.dll"]
+ENTRYPOINT ["dotnet", "wisebet-backend.dll"]
