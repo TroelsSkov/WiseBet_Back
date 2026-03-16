@@ -14,6 +14,10 @@ namespace WiseBet.backend.Data
         public DbSet<RoundResult> Results { get; set; }
 
 
+        public DatabaseContext(DbContextOptions<DatabaseContext> options) : base(options)
+        {
+        }
+
         public DatabaseContext()
         {
             // // Koden avnendes til SQLlite databasen
@@ -32,7 +36,10 @@ namespace WiseBet.backend.Data
 
         // Anvender et connection string og kobler til en sqlserver
         protected override void OnConfiguring(DbContextOptionsBuilder options)
-           => options.UseSqlServer(DbPath);
+        {
+            if (!options.IsConfigured)
+                options.UseSqlServer(DbPath);
+        }
     }
 
 
