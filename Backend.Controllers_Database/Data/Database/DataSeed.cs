@@ -14,11 +14,13 @@ namespace WiseBet.backend.Data
 
         public async void Seed()
         {
-            // d_context.Database.EnsureDeleted(); // Kan anvendes hvis databasen driller
-            d_context.Database.Migrate();
+            // Sikrer at databasen er opdateret
+            await d_context.Database.MigrateAsync();
 
-            // Seeding kommando
-            // Brug .Any() til at sikrer du ikke indsætter 2x 
+            // Tjek om der allerede er data (undgå duplikering)
+            if (await d_context.UserAccounts.AnyAsync()) return;
+
+            // 1. Opret alle 20 oprindelige brugere
             var users = new List<UserAccount>
     {
         new UserAccount { Username = "Lukas_Bet88", Password = "HashedPassword123", Saldo = 500 },
@@ -44,6 +46,49 @@ namespace WiseBet.backend.Data
     };
 
             await d_context.UserAccounts.AddRangeAsync(users);
+            await d_context.SaveChangesAsync();
+
+            // 2. Opret Bet-muligheder (skal bruges til repositories)
+            var possibilities = new List<BetPossibility>
+    {
+        new BetPossibility { BetDescription = "Rød" },
+        new BetPossibility { BetDescription = "Sort" },
+        new BetPossibility { BetDescription = "Grøn (0)" }
+    };
+            await d_context.BetPossibilities.AddRangeAsync(possibilities);
+
+            // 3. Opret et par runder
+            var rounds = new List<Round>
+    {
+        new Round { TotalAmount = 5000, Payout = 4500, Made = 500 },
+        new Round { TotalAmount = 2000, Payout = 1800, Made = 200 }
+    };
+            await d_context.Rounds.AddRangeAsync(rounds);
+            await d_context.SaveChangesAsync();
+
+            // 4. Opret test-data for Repositories (Kobler de første par brugere til bets og chat)
+            var testBets = new List<BetHistory>
+    {
+        new BetHistory { Amount = 100, UserID = users[0].UserID, RoundID = rounds[0].RoundID, BetPossibilityID = possibilities[0].BetPossibilityID },
+        new BetHistory { Amount = 250, UserID = users[1].UserID, RoundID = rounds[0].RoundID, BetPossibilityID = possibilities[1].BetPossibilityID },
+        new BetHistory { Amount = 500, UserID = users[3].UserID, RoundID = rounds[1].RoundID, BetPossibilityID = possibilities[0].BetPossibilityID }
+    };
+            await d_context.BetHistories.AddRangeAsync(testBets);
+
+            var testChats = new List<Chat>
+    {
+        new Chat { UserID = users[0].UserID, chat = "Håber på rød i denne runde!" },
+        new Chat { UserID = users[12].UserID, chat = "William her, jeg går all-in!" }
+    };
+            await d_context.Chats.AddRangeAsync(testChats);
+
+            var testPayments = new List<PaymentHistory>
+    {
+        new PaymentHistory { UserID = users[0].UserID, PaymentAmount = 500, PrePaymentBalance = 0 },
+        new PaymentHistory { UserID = users[3].UserID, PaymentAmount = 1000, PrePaymentBalance = 1100 }
+    };
+            await d_context.PaymentHistories.AddRangeAsync(testPayments);
+
             await d_context.SaveChangesAsync();
         }
     }
