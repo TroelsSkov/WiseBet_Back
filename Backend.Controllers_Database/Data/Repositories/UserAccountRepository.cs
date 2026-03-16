@@ -32,7 +32,7 @@ namespace WiseBet.backend.IRepository
 
             var user = await context.UserAccounts.Where(u => u.UserID == id).FirstOrDefaultAsync();
             if (user == null)
-                return null;
+                throw new KeyNotFoundException(this);
 
             return new UserAccountDto
             {
@@ -67,10 +67,9 @@ namespace WiseBet.backend.IRepository
         {
             var user = await context.UserAccounts.Where(u => u.UserID == id).FirstOrDefaultAsync();
 
-            if(user == null)
+            if (user == null)
                 throw new KeyNotFoundException(this);
-            
-            user.UserID = dto.ID;
+
             user.Username = dto.Username;
             user.Password = dto.Password;
             user.Saldo = dto.Saldo;
@@ -81,7 +80,7 @@ namespace WiseBet.backend.IRepository
         {
             var user = await context.UserAccounts.Where(u => dto.ID == u.UserID).FirstOrDefaultAsync();
 
-            if(user == null)
+            if (user == null)
                 throw new KeyNotFoundException(this);
 
             context.Remove(user);

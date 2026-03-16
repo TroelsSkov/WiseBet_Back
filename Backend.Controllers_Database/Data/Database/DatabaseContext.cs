@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using WiseBet.backend.Models;
 namespace WiseBet.backend.Data
 {
+    
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     public class DatabaseContext : DbContext
     {
         public string? DbPath { get; }

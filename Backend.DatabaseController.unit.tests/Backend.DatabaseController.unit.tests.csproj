@@ -24,7 +24,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Backend.Controllers_Database\wisebet-backend.csproj" />
     <ProjectReference Include="..\Backend.Controllers_Database\WiseBet.backend.csproj" />
   </ItemGroup>
 

@@ -3,6 +3,7 @@ using WiseBet.backend.Models;
 
 namespace WiseBet.backend.Data
 {
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     public class DataSeed
     {
         private readonly DatabaseContext d_context;
