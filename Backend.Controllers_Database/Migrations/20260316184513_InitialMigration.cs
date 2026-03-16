@@ -3,10 +3,10 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace wisebet_backend.Migrations
+namespace WiseBet.backend.Migrations
 {
     /// <inheritdoc />
-    public partial class InitalMigrationOnUpdatedERD : Migration
+    public partial class InitialMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

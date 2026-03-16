@@ -8,7 +8,7 @@ using WiseBet.backend.Data;
 
 #nullable disable
 
-namespace wisebet_backend.Migrations
+namespace WiseBet.backend.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
     partial class DatabaseContextModelSnapshot : ModelSnapshot

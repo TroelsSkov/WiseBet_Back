@@ -11,7 +11,8 @@ namespace WiseBet.backend.Data
         public DbSet<BetHistory> BetHistories { get; set; }
         public DbSet<BetPossibility> BetPossibilities { get; set; }
         public DbSet<Round> Rounds { get; set; }
-        public DbSet<RoundResult> Results {get; set;}
+        public DbSet<RoundResult> Results { get; set; }
+
 
         public DatabaseContext()
         {
@@ -30,8 +31,8 @@ namespace WiseBet.backend.Data
         // => options.UseSqlite($"Data Source={DbPath}"); 
 
         // Anvender et connection string og kobler til en sqlserver
-         protected override void OnConfiguring(DbContextOptionsBuilder options)
-            => options.UseSqlServer(DbPath);
+        protected override void OnConfiguring(DbContextOptionsBuilder options)
+           => options.UseSqlServer(DbPath);
     }
 
 

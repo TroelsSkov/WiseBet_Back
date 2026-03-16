@@ -9,11 +9,11 @@ using WiseBet.backend.Data;
 
 #nullable disable
 
-namespace wisebet_backend.Migrations
+namespace WiseBet.backend.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20260312124346_InitalMigrationOnUpdatedERD")]
-    partial class InitalMigrationOnUpdatedERD
+    [Migration("20260316184513_InitialMigration")]
+    partial class InitialMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

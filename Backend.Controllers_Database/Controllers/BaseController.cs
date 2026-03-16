@@ -1,30 +1,18 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using WiseBet.backend.Data;
+using WiseBet.backend.DTOs;
+using WiseBet.backend.IRepository;
 using WiseBet.backend.Models;
 namespace WiseBet.backend.Controllers
 {
-   [Route("api/[controller]")]
-   [ApiController]
-   public class BaseController : ControllerBase
+   public abstract class BaseController<T> : ControllerBase where T : IDto
    {
-      private readonly DatabaseContext context;
-      public BaseController(DatabaseContext db)
-      {
-         context = db;
-      }
-      [HttpGet]
-      public IActionResult Get()
-      {
-         return BadRequest("API not defined");
-      }
+      protected readonly BaseRepository<T> repository;
 
-      [HttpDelete("{id}")]
-      public IActionResult Delete(int id)
+      public BaseController(BaseRepository<T> repo)
       {
-         //Logic til at delete
-
-         return NoContent();
+         repository = repo;
       }
    }
 }
