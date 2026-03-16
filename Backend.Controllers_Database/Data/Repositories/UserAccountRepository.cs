@@ -5,7 +5,7 @@ using WiseBet.backend.DTOs;
 
 namespace WiseBet.backend.IRepository
 {
-    public class UserAccountRepository : BaseRepository<UserAccountDto>
+    public class UserAccountRepository : BaseRepository<UserAccountDto, Guid>
     {
         public UserAccountRepository(DatabaseContext c) : base(c)
         {
@@ -28,8 +28,10 @@ namespace WiseBet.backend.IRepository
 
             return UserDtos;
         }
-        public override async Task<UserAccountDto> GetByIdAsync(int id)
+        public override async Task<UserAccountDto> GetByIdAsync(Guid id)
         {
+            
+            var user = context.UserAccounts.Where( u => u.UserID == id);
             // Placeholder
             return new UserAccountDto
             {
@@ -43,7 +45,7 @@ namespace WiseBet.backend.IRepository
         {
 
         }
-        public override async Task PutAsync(int id, UserAccountDto dto)
+        public override async Task PutAsync(Guid id, UserAccountDto dto)
         {
 
         }
