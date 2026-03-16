@@ -8,7 +8,7 @@ namespace WiseBet.backend.Models
     public class UserAccount
     {
     [Key]
-    public Guid UserID{get; private set;} = Guid.NewGuid();
+    public Guid UserID{get; set;} = Guid.NewGuid();
     public string Username{get; set;}
     public string Password{get; set;}
     public int Saldo {get; set;}
