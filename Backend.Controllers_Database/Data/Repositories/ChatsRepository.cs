@@ -21,7 +21,7 @@ namespace WiseBet.backend.IRepository
                 toRet.Add(new ChatDto
                 {
                     ID = chat.ChatID,
-                    Username = chat.UserAccount.Username,
+                    UserId = chat.UserAccount.UserID,
                     Message = chat.chat,
                     TimeOfChat = chat.TimeOfChat
                 });
@@ -38,7 +38,7 @@ namespace WiseBet.backend.IRepository
             return new ChatDto
             {
                 ID = chat.ChatID,
-                Username = chat.UserAccount.Username,
+                UserId = chat.UserAccount.UserID,
                 Message = chat.chat,
                 TimeOfChat = chat.TimeOfChat
             };
