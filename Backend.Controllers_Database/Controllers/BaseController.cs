@@ -8,9 +8,9 @@ namespace WiseBet.backend.Controllers
 {
    public abstract class BaseController<T> : ControllerBase where T : IDto
    {
-      protected readonly BaseRepository<T> repository;
+      protected readonly BaseRepository<T, Guid> repository;
 
-      public BaseController(BaseRepository<T> repo)
+      public BaseController(BaseRepository<T, Guid> repo)
       {
          repository = repo;
       }

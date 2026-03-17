@@ -2,9 +2,11 @@ using Microsoft.EntityFrameworkCore;
 using WiseBet.backend.Models;
 namespace WiseBet.backend.Data
 {
+
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     public class DatabaseContext : DbContext
     {
-        public string? DbPath { get; }
+        private readonly string? DbPath;
         public DbSet<Chat> Chats { get; set; }
         public DbSet<UserAccount> UserAccounts { get; set; }
         public DbSet<PaymentHistory> PaymentHistories { get; set; }
@@ -13,7 +15,6 @@ namespace WiseBet.backend.Data
         public DbSet<Round> Rounds { get; set; }
         public DbSet<RoundResult> Results { get; set; }
 
-
         public DatabaseContext()
         {
             // // Koden avnendes til SQLlite databasen
@@ -21,19 +22,26 @@ namespace WiseBet.backend.Data
             // var path = Environment.GetFolderPath(folder);
             // DbPath = System.IO.Path.Join(path, "WiseBet.db");
 
-            // Henter .env connection string
-            DotNetEnv.Env.Load();
-            DbPath = Environment.GetEnvironmentVariable("DbConnnectionString");
-
+            // // Henter .env connection string
+            // DotNetEnv.Env.Load();
+            // string DbPath = Environment.GetEnvironmentVariable("DbConnnectionString");
         }
-        // // Opretter en lokal SQLlite database
-        // protected override void OnConfiguring(DbContextOptionsBuilder options)
-        // => options.UseSqlite($"Data Source={DbPath}"); 
 
-        // Anvender et connection string og kobler til en sqlserver
+        public DatabaseContext(DbContextOptions<DatabaseContext> options) : base(options)
+        {
+        }
+
         protected override void OnConfiguring(DbContextOptionsBuilder options)
-           => options.UseSqlServer(DbPath);
+        {
+            if (!options.IsConfigured) // Ny løsning; Anvendes i unit test.
+            {
+                DotNetEnv.Env.Load();
+                string? DbPath = Environment.GetEnvironmentVariable("DbConnnectionString");
+                if (string.IsNullOrEmpty(DbPath))
+                    throw new NullReferenceException("DbConnection string was not found");
+                else
+                    options.UseSqlServer(DbPath);
+            }
+        }
     }
-
-
 }
