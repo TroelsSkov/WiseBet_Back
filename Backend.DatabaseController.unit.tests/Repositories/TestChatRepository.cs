@@ -183,7 +183,7 @@ public class TestChatsRepository
     }
 
     [Test]
-    public async Task Delete_DeleteExitingChat_success()
+    public async Task Delete_DeleteExsistingChat_success()
     {
         ChatDto c1 = new ChatDto
         {
@@ -199,5 +199,23 @@ public class TestChatsRepository
         Assert.That(chats.Count, Is.EqualTo(1));
 
         Assert.DoesNotThrowAsync(async () => await m_uut.DeleteAsync(c1));
+    }
+
+    [Test]
+    public async Task Delete_DeleteNonExsistingChat_ThrowsException()
+    {
+
+        var chats = await m_uut.GetAllAsync();
+        Assert.That(chats.Count, Is.EqualTo(0));
+
+        ChatDto c1 = new ChatDto
+        {
+            ID = Guid.NewGuid(),
+            UserId = u1.ID,
+            Message = "Hello World",
+            TimeOfChat = DateTime.Now
+        };
+
+        Assert.ThrowsAsync<WiseBet.backend.IRepository.KeyNotFoundException>(async () => await m_uut.DeleteAsync(c1));
     }
 }
