@@ -36,7 +36,7 @@ namespace WiseBet.backend.Data
             if (!options.IsConfigured) // Ny løsning; Anvendes i unit test.
             {
                 DotNetEnv.Env.Load();
-                string DbPath = Environment.GetEnvironmentVariable("DbConnnectionString");
+                string? DbPath = Environment.GetEnvironmentVariable("DbConnnectionString");
                 if (string.IsNullOrEmpty(DbPath))
                     throw new NullReferenceException("DbConnection string was not found");
                 else
@@ -44,6 +44,4 @@ namespace WiseBet.backend.Data
             }
         }
     }
-
-
 }
