@@ -6,6 +6,7 @@ using WiseBet.backend.IRepository;
 using WiseBet.backend.Models;
 namespace WiseBet.backend.Controllers
 {
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
    public abstract class BaseController<T> : ControllerBase where T : IDto
    {
       protected readonly BaseRepository<T, Guid> repository;
