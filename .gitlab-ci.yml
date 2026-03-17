@@ -10,7 +10,7 @@ build-and-test:
     - 'dotnet clean'
     - 'dotnet build'
     # dotnet test will dump coverage.cobertura.xml in tests/MyThing.Tests/TestResults/<number>/coverage.cobertura.xml
-    - 'dotnet test --collect:"XPlat Code Coverage" --logger:"junit;MethodFormat=Class;FailureBodyFormat=Verbose"'
+    - 'dotnet test --collect:"XPlat Code Coverage" --logger:"junit;MethodFormat=Class;FailureBodyFormat=Verbose" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Exclude="[*]*Migrations.*,[*]*Program*,[*]Microsoft.*,[*]*CompilerServices*"'
     # Create Report using ReportGenerator: https://reportgenerator.io/usage
     # When invoking nuget package directly it will execute from sln root folder
     # The report path is therefore set to ./*/*/*/*/coverage.cobertura.xml
