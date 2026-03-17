@@ -13,15 +13,34 @@ namespace WiseBet.backend.IRepository
 
         public override async Task<List<ChatDto>> GetAllAsync()
         {
-            return new List<ChatDto>();
+            var chats = await context.Chats.Include(c => c.UserAccount).ToListAsync();
+            List<ChatDto> toRet = new();
+
+            foreach (var chat in chats)
+            {
+                toRet.Add(new ChatDto
+                {
+                    ID = chat.ChatID,
+                    Username = chat.UserAccount.Username,
+                    Message = chat.chat,
+                    TimeOfChat = chat.TimeOfChat
+                });
+            }
+
+            return toRet;
         }
         public override async Task<ChatDto> GetByIdAsync(Guid id)
         {
+            var chat = await context.Chats.Where(c => c.ChatID == id).Include(c => c.UserAccount).FirstOrDefaultAsync();
+            if (chat == null)
+                throw new KeyNotFoundException(this);
+
             return new ChatDto
             {
-                Username = "Placeholder",
-                Message = "Placeholder",
-                TimeOfChat = DateTime.Now
+                ID = chat.ChatID,
+                Username = chat.UserAccount.Username,
+                Message = chat.chat,
+                TimeOfChat = chat.TimeOfChat
             };
         }
         public override async Task PostAsync(ChatDto dto)
