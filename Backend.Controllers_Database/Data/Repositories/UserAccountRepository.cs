@@ -51,17 +51,9 @@ namespace WiseBet.backend.IRepository
                 Password = dto.Password,
                 Saldo = dto.Saldo
             };
-
-            try
-            {
-                await context.UserAccounts.AddAsync(userToAdd);
-                await context.SaveChangesAsync();
-            }
-            catch (System.Exception e)
-            {
-                Console.WriteLine($"[UserAccountRepository] Caught an exception: {e.Message}");
-            }
-
+            
+            await context.UserAccounts.AddAsync(userToAdd);
+            await context.SaveChangesAsync();
         }
         public override async Task PutAsync(Guid id, UserAccountDto dto)
         {
