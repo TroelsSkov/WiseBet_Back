@@ -79,5 +79,24 @@ namespace WiseBet.backend.IRepository
             context.Remove(chat);
             await context.SaveChangesAsync();
         }
+        public async Task<List<ChatDto>> GetAllUserChatsAsync(Guid UserId)
+        {
+
+            var userChats = await context.Chats.Where(c => c.UserID == UserId).Include(c => c.UserAccount).ToListAsync();
+            List<ChatDto> toRet = new();
+
+            foreach (var chat in userChats)
+            {
+                toRet.Add(new ChatDto
+                {
+                    ID = chat.ChatID,
+                    UserId = chat.UserAccount.UserID,
+                    Message = chat.chat,
+                    TimeOfChat = chat.TimeOfChat
+                });
+            }
+
+            return toRet;
+        }
     }
 }

@@ -218,4 +218,51 @@ public class TestChatsRepository
 
         Assert.ThrowsAsync<WiseBet.backend.IRepository.KeyNotFoundException>(async () => await m_uut.DeleteAsync(c1));
     }
+
+    [Test]
+    public async Task Get_GetUserChatsByUserId_ReturnsUserChats()
+    {
+        ChatDto c1 = new ChatDto
+        {
+            ID = Guid.NewGuid(),
+            UserId = u1.ID,
+            Message = "Hey Aske",
+            TimeOfChat = DateTime.Now
+        };
+        ChatDto c2 = new ChatDto
+        {
+            ID = Guid.NewGuid(),
+            UserId = u2.ID,
+            Message = "Hey Katrine",
+            TimeOfChat = DateTime.Now
+        };
+        ChatDto c3 = new ChatDto
+        {
+            ID = Guid.NewGuid(),
+            UserId = u1.ID,
+            Message = "Du lækker <3",
+            TimeOfChat = DateTime.Now
+        };
+
+        await m_uut.PostAsync(c1);
+        await m_uut.PostAsync(c2);
+        await m_uut.PostAsync(c3);
+
+        var u1Chats = await m_uut.GetAllUserChatsAsync(u1.ID);
+        Assert.That(u1Chats.Count, Is.EqualTo(2));
+        var u2Chats = await m_uut.GetAllUserChatsAsync(u2.ID);
+        Assert.That(u2Chats.Count, Is.EqualTo(1));
+
+        Assert.That(u1Chats[0].Message, Is.EqualTo(c1.Message));
+        Assert.That(u1Chats[1].Message, Is.EqualTo(c3.Message));
+        Assert.That(u2Chats[0].Message, Is.EqualTo(c2.Message));
+    }
+
+        [Test]
+    public async Task Get_GetUserChatsByWrongUserId_ReturnsEmptyList()
+    {
+        var userChats = await m_uut.GetAllUserChatsAsync(Guid.NewGuid());
+        Assert.That(userChats, Is.Not.Null);
+        Assert.That(userChats.Count, Is.EqualTo(0));
+    }
 }
