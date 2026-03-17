@@ -10,6 +10,7 @@ namespace WiseBet.backend.Controllers{
 //Https:localhost:5277/Api/UserAccounts
     [Route("Api/[Controller]")]
     [ApiController]
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     public class UserAccountController : BaseController<UserAccountDto>
     {
         public UserAccountController(DatabaseContext DbContext) : base(new UserAccountRepository(DbContext))

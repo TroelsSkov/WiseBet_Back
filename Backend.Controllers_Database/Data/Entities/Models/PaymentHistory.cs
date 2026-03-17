@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace WiseBet.backend.Models
 {
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     public class PaymentHistory
     {
         //GUID for sikkerhed? samt DTO såen vi ik returnerer password via. postman

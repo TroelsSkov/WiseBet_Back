@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace WiseBet.backend.Models
 {
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
 public class Round{
     [Key]
     public Guid RoundID { get; set; } = Guid.NewGuid();

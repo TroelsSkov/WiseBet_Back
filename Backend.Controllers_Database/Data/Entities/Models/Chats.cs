@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace WiseBet.backend.Models
 {
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     public class Chat{
     [Key]
     public Guid ChatID{get; private set;} = Guid.NewGuid();

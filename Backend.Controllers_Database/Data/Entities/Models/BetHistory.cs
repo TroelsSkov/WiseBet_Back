@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace WiseBet.backend.Models
 {
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     public class BetHistory
     {
         [Key]
