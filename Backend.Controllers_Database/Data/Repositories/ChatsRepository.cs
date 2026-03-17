@@ -72,7 +72,7 @@ namespace WiseBet.backend.IRepository
         }
         public override async Task DeleteAsync(ChatDto dto)
         {
-            var chat = context.Chats.Where(c => dto.ID == c.ChatID).FirstOrDefaultAsync();
+            var chat = await context.Chats.Where(c => dto.ID == c.ChatID).FirstOrDefaultAsync();
             if (chat == null)
                 throw new KeyNotFoundException(this);
 

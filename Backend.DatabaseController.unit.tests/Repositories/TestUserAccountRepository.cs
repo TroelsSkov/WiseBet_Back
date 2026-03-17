@@ -6,7 +6,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
 namespace Backend.DatabaseController.unit.tests.Repositories;
 
-public class Tests
+public class TestUserAccountRepository
 {
     private UserAccountRepository m_uut;
     private DatabaseContext m_context;
