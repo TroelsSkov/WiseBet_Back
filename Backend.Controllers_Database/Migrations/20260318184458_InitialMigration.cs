@@ -6,22 +6,22 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace WiseBet.backend.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialDatabaseMigration : Migration
+    public partial class InitialMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "BetPossibilities",
+                name: "Outcomes",
                 columns: table => new
                 {
-                    BetPossibilityID = table.Column<int>(type: "int", nullable: false)
+                    OutcomeId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    BetDescription = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    OutcomeDescription = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_BetPossibilities", x => x.BetPossibilityID);
+                    table.PrimaryKey("PK_Outcomes", x => x.OutcomeId);
                 });
 
             migrationBuilder.CreateTable(
@@ -56,6 +56,7 @@ namespace WiseBet.backend.Migrations
                 {
                     RoundID = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     RoundDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    OutcomeId = table.Column<int>(type: "int", nullable: true),
                     TotalAmount = table.Column<int>(type: "int", nullable: false),
                     Payout = table.Column<int>(type: "int", nullable: false),
                     Made = table.Column<int>(type: "int", nullable: false),
@@ -64,6 +65,11 @@ namespace WiseBet.backend.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Rounds", x => x.RoundID);
+                    table.ForeignKey(
+                        name: "FK_Rounds_Outcomes_OutcomeId",
+                        column: x => x.OutcomeId,
+                        principalTable: "Outcomes",
+                        principalColumn: "OutcomeId");
                     table.ForeignKey(
                         name: "FK_Rounds_Results_RoundResultID",
                         column: x => x.RoundResultID,
@@ -120,18 +126,17 @@ namespace WiseBet.backend.Migrations
                     Amount = table.Column<int>(type: "int", nullable: false),
                     UserID = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     UserAccountUserID = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    BetPossibilityID = table.Column<int>(type: "int", nullable: false),
+                    OutcomeId = table.Column<int>(type: "int", nullable: true),
                     RoundID = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_BetHistories", x => x.BetHistoryID);
                     table.ForeignKey(
-                        name: "FK_BetHistories_BetPossibilities_BetPossibilityID",
-                        column: x => x.BetPossibilityID,
-                        principalTable: "BetPossibilities",
-                        principalColumn: "BetPossibilityID",
-                        onDelete: ReferentialAction.Cascade);
+                        name: "FK_BetHistories_Outcomes_OutcomeId",
+                        column: x => x.OutcomeId,
+                        principalTable: "Outcomes",
+                        principalColumn: "OutcomeId");
                     table.ForeignKey(
                         name: "FK_BetHistories_Rounds_RoundID",
                         column: x => x.RoundID,
@@ -147,9 +152,9 @@ namespace WiseBet.backend.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_BetHistories_BetPossibilityID",
+                name: "IX_BetHistories_OutcomeId",
                 table: "BetHistories",
-                column: "BetPossibilityID");
+                column: "OutcomeId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_BetHistories_RoundID",
@@ -172,6 +177,11 @@ namespace WiseBet.backend.Migrations
                 column: "UserID");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Rounds_OutcomeId",
+                table: "Rounds",
+                column: "OutcomeId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Rounds_RoundResultID",
                 table: "Rounds",
                 column: "RoundResultID");
@@ -190,13 +200,13 @@ namespace WiseBet.backend.Migrations
                 name: "PaymentHistories");
 
             migrationBuilder.DropTable(
-                name: "BetPossibilities");
-
-            migrationBuilder.DropTable(
                 name: "Rounds");
 
             migrationBuilder.DropTable(
                 name: "UserAccounts");
+
+            migrationBuilder.DropTable(
+                name: "Outcomes");
 
             migrationBuilder.DropTable(
                 name: "Results");

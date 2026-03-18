@@ -12,8 +12,8 @@ using WiseBet.backend.Data;
 namespace WiseBet.backend.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20260318182329_InitialDatabaseMigration")]
-    partial class InitialDatabaseMigration
+    [Migration("20260318184458_InitialMigration")]
+    partial class InitialMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -34,7 +34,7 @@ namespace WiseBet.backend.Migrations
                     b.Property<int>("Amount")
                         .HasColumnType("int");
 
-                    b.Property<int>("BetPossibilityID")
+                    b.Property<int?>("OutcomeId")
                         .HasColumnType("int");
 
                     b.Property<Guid>("RoundID")
@@ -48,30 +48,13 @@ namespace WiseBet.backend.Migrations
 
                     b.HasKey("BetHistoryID");
 
-                    b.HasIndex("BetPossibilityID");
+                    b.HasIndex("OutcomeId");
 
                     b.HasIndex("RoundID");
 
                     b.HasIndex("UserAccountUserID");
 
                     b.ToTable("BetHistories");
-                });
-
-            modelBuilder.Entity("WiseBet.backend.Models.BetPossibility", b =>
-                {
-                    b.Property<int>("BetPossibilityID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("BetPossibilityID"));
-
-                    b.Property<string>("BetDescription")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("BetPossibilityID");
-
-                    b.ToTable("BetPossibilities");
                 });
 
             modelBuilder.Entity("WiseBet.backend.Models.Chat", b =>
@@ -95,6 +78,23 @@ namespace WiseBet.backend.Migrations
                     b.HasIndex("UserID");
 
                     b.ToTable("Chats");
+                });
+
+            modelBuilder.Entity("WiseBet.backend.Models.Outcome", b =>
+                {
+                    b.Property<int>("OutcomeId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("OutcomeId"));
+
+                    b.Property<string>("OutcomeDescription")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("OutcomeId");
+
+                    b.ToTable("Outcomes");
                 });
 
             modelBuilder.Entity("WiseBet.backend.Models.PaymentHistory", b =>
@@ -131,6 +131,9 @@ namespace WiseBet.backend.Migrations
                     b.Property<int>("Made")
                         .HasColumnType("int");
 
+                    b.Property<int?>("OutcomeId")
+                        .HasColumnType("int");
+
                     b.Property<int>("Payout")
                         .HasColumnType("int");
 
@@ -144,6 +147,8 @@ namespace WiseBet.backend.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("RoundID");
+
+                    b.HasIndex("OutcomeId");
 
                     b.HasIndex("RoundResultID");
 
@@ -189,11 +194,9 @@ namespace WiseBet.backend.Migrations
 
             modelBuilder.Entity("WiseBet.backend.Models.BetHistory", b =>
                 {
-                    b.HasOne("WiseBet.backend.Models.BetPossibility", "BetPossibility")
-                        .WithMany("Bets")
-                        .HasForeignKey("BetPossibilityID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.HasOne("WiseBet.backend.Models.Outcome", "OutcomeBet")
+                        .WithMany()
+                        .HasForeignKey("OutcomeId");
 
                     b.HasOne("WiseBet.backend.Models.Round", "Round")
                         .WithMany("Bets")
@@ -207,7 +210,7 @@ namespace WiseBet.backend.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("BetPossibility");
+                    b.Navigation("OutcomeBet");
 
                     b.Navigation("Round");
 
@@ -238,14 +241,15 @@ namespace WiseBet.backend.Migrations
 
             modelBuilder.Entity("WiseBet.backend.Models.Round", b =>
                 {
+                    b.HasOne("WiseBet.backend.Models.Outcome", "Outcome")
+                        .WithMany()
+                        .HasForeignKey("OutcomeId");
+
                     b.HasOne("WiseBet.backend.Models.RoundResult", null)
                         .WithMany("Round")
                         .HasForeignKey("RoundResultID");
-                });
 
-            modelBuilder.Entity("WiseBet.backend.Models.BetPossibility", b =>
-                {
-                    b.Navigation("Bets");
+                    b.Navigation("Outcome");
                 });
 
             modelBuilder.Entity("WiseBet.backend.Models.Round", b =>
