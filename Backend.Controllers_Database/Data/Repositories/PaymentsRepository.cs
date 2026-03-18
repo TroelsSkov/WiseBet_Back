@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using WiseBet.backend.Data;
 using WiseBet.backend.DTOs;
 using WiseBet.backend.Models;
@@ -41,20 +42,56 @@ namespace WiseBet.backend.IRepository
                 PaymentAmount = payment.PaymentAmount,
                 PrePaymentBalance = payment.PrePaymentBalance
             };
-            // Placeholder
+
             return toRet;
         }
         public override async Task PostAsync(PaymentDto dto)
         {
+            PaymentHistory toAdd = new PaymentHistory
+            {
+                PaymentID = dto.ID,
+                UserID = dto.UserID,
+                TimeOfPayment = dto.TimeOfPayment,
+                PaymentAmount = dto.PaymentAmount,
+                PrePaymentBalance = dto.PrePaymentBalance
+            };
 
+            await context.PaymentHistories.AddAsync(toAdd);
+            await context.SaveChangesAsync();
         }
+
+        
+        /// <summary>
+        /// Changes everything in the PaymentHistory entity.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="dto"></param>
+        /// <returns>Return nothing</returns>
+        /// <exception cref="KeyNotFoundException"></exception>
+        /// <exception cref="KeyNotFoundException"></exception>
         public override async Task PutAsync(Guid id, PaymentDto dto)
         {
+            var payment = await context.PaymentHistories.Where(p => id == p.PaymentID).Include(p => p.UserAccount).FirstOrDefaultAsync();
+            if(payment == null)
+                throw new KeyNotFoundException(this);
+            if(dto.PaymentAmount < 0 || dto.PrePaymentBalance < 0)
+                throw new InvalidParameterException(this);
 
+            payment.PaymentAmount = dto.PaymentAmount;
+            payment.PrePaymentBalance = dto.PrePaymentBalance;
+            payment.TimeOfPayment = dto.TimeOfPayment;
+            payment.UserID = dto.UserID;
+
+            await context.SaveChangesAsync();
         }
         public override async Task DeleteAsync(PaymentDto dto)
         {
-
+            var payment = context.PaymentHistories.Where(p => dto.ID == p.PaymentID).FirstOrDefaultAsync();
+            if(payment == null)
+                throw new KeyNotFoundException(this);
+            
+            context.Remove(payment);
+            await context.SaveChangesAsync();
         }
     }
 }

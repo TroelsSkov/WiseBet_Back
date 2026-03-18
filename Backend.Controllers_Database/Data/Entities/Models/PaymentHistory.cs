@@ -9,7 +9,7 @@ namespace WiseBet.backend.Models
     {
         //GUID for sikkerhed? samt DTO såen vi ik returnerer password via. postman
     [Key]
-    public Guid PaymentID{get; private set;} = Guid.NewGuid();
+    public Guid PaymentID{get; set;} = Guid.NewGuid();
     public Guid UserID{get; set;}
     public UserAccount UserAccount{get; set;}
     public DateTime TimeOfPayment {get; set;} = DateTime.Now;
