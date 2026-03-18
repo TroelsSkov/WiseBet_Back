@@ -120,5 +120,24 @@ namespace WiseBet.backend.IRepository
             context.Remove(payment);
             await context.SaveChangesAsync();
         }
+
+        public async Task<List<PaymentDto>> GetAllChatByUser(Guid Userid)
+        {
+            var payments = await context.PaymentHistories.Where(p => p.UserID == Userid).Include(p => p.UserAccount).ToListAsync();  // Maybe include is not needed?
+            List<PaymentDto> toRet = new();
+            foreach (var payment in payments)
+            {
+                toRet.Add(new PaymentDto
+                {
+                    ID = payment.PaymentID,
+                    UserID = payment.UserID,
+                    TimeOfPayment = payment.TimeOfPayment,
+                    PaymentAmount = payment.PaymentAmount,
+                    PrePaymentBalance = payment.PrePaymentBalance
+                });
+            }
+
+            return toRet;
+        }
     }
 }

@@ -292,5 +292,42 @@ public class TestPaymentsRepository
         Assert.DoesNotThrowAsync(async () => await m_uut.DeleteAsync(p1));
         Assert.ThrowsAsync<WiseBet.backend.IRepository.KeyNotFoundException>(async () => await m_uut.DeleteAsync(p1));
     }
+    [Test]
+    public async Task Get_GetAllPaymentsByExsistingUser_ReturnListWithPayments()
+    {
+        PaymentDto p1 = new PaymentDto
+        {
+            ID = Guid.NewGuid(),
+            UserID = u1.ID,
+            PaymentAmount = 100
+        };
+        PaymentDto p2 = new PaymentDto
+        {
+            ID = Guid.NewGuid(),
+            UserID = u1.ID,
+            PaymentAmount = 1000
+        };
+        PaymentDto p3 = new PaymentDto
+        {
+            ID = Guid.NewGuid(),
+            UserID = u2.ID,
+            PaymentAmount = 10
+        };
 
+        await m_uut.PostAsync(p1);
+        await m_uut.PostAsync(p2);
+        await m_uut.PostAsync(p3);
+
+        var U1payments = await m_uut.GetAllChatByUser(u1.ID);
+        var U2payments = await m_uut.GetAllChatByUser(u2.ID);
+        Assert.That(U1payments.Count, Is.EqualTo(2));
+        Assert.That(U2payments.Count, Is.EqualTo(1));
+    }
+
+    [Test]
+    public async Task Get_GetAllPaymentsByExsistingUser_ReturnEmptyList()
+    {
+        var U1payments = await m_uut.GetAllChatByUser(u1.ID);
+        Assert.That(U1payments.Count, Is.Zero);
+    }
 }
