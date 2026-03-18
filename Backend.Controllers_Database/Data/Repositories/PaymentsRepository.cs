@@ -98,8 +98,8 @@ namespace WiseBet.backend.IRepository
                 throw new InvalidParameterException(this);
 
             // Updating user saldo
-            int diff = payment.PaymentAmount - dto.PaymentAmount;
-            var user = await m_userRepo.GetByIdAsync(dto.ID);
+            int diff = dto.PaymentAmount - payment.PaymentAmount;
+            var user = await m_userRepo.GetByIdAsync(dto.UserID);
             user.Saldo += diff;
             if (user.Saldo < 0) // Do we want the user to owe us?
                 user.Saldo = 0;
@@ -113,7 +113,7 @@ namespace WiseBet.backend.IRepository
         }
         public override async Task DeleteAsync(PaymentDto dto)
         {
-            var payment = context.PaymentHistories.Where(p => dto.ID == p.PaymentID).FirstOrDefaultAsync();
+            var payment = await context.PaymentHistories.Where(p => dto.ID == p.PaymentID).FirstOrDefaultAsync();
             if (payment == null)
                 throw new KeyNotFoundException(this);
 
