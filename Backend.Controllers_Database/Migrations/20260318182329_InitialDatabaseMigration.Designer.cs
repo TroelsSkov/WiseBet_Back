@@ -12,8 +12,8 @@ using WiseBet.backend.Data;
 namespace WiseBet.backend.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20260317170628_UserAccountForeignKeyFix")]
-    partial class UserAccountForeignKeyFix
+    [Migration("20260318182329_InitialDatabaseMigration")]
+    partial class InitialDatabaseMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -34,8 +34,8 @@ namespace WiseBet.backend.Migrations
                     b.Property<int>("Amount")
                         .HasColumnType("int");
 
-                    b.Property<Guid>("BetPossibilityID")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<int>("BetPossibilityID")
+                        .HasColumnType("int");
 
                     b.Property<Guid>("RoundID")
                         .HasColumnType("uniqueidentifier");
@@ -59,9 +59,11 @@ namespace WiseBet.backend.Migrations
 
             modelBuilder.Entity("WiseBet.backend.Models.BetPossibility", b =>
                 {
-                    b.Property<Guid>("BetPossibilityID")
+                    b.Property<int>("BetPossibilityID")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("BetPossibilityID"));
 
                     b.Property<string>("BetDescription")
                         .IsRequired()
@@ -110,15 +112,12 @@ namespace WiseBet.backend.Migrations
                     b.Property<DateTime>("TimeOfPayment")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid>("UserAccountUserID")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<Guid>("UserID")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("PaymentID");
 
-                    b.HasIndex("UserAccountUserID");
+                    b.HasIndex("UserID");
 
                     b.ToTable("PaymentHistories");
                 });
@@ -230,7 +229,7 @@ namespace WiseBet.backend.Migrations
                 {
                     b.HasOne("WiseBet.backend.Models.UserAccount", "UserAccount")
                         .WithMany()
-                        .HasForeignKey("UserAccountUserID")
+                        .HasForeignKey("UserID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

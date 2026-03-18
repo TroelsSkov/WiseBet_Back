@@ -31,8 +31,8 @@ namespace WiseBet.backend.Migrations
                     b.Property<int>("Amount")
                         .HasColumnType("int");
 
-                    b.Property<Guid>("BetPossibilityID")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<int>("BetPossibilityID")
+                        .HasColumnType("int");
 
                     b.Property<Guid>("RoundID")
                         .HasColumnType("uniqueidentifier");
@@ -56,9 +56,11 @@ namespace WiseBet.backend.Migrations
 
             modelBuilder.Entity("WiseBet.backend.Models.BetPossibility", b =>
                 {
-                    b.Property<Guid>("BetPossibilityID")
+                    b.Property<int>("BetPossibilityID")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("BetPossibilityID"));
 
                     b.Property<string>("BetDescription")
                         .IsRequired()

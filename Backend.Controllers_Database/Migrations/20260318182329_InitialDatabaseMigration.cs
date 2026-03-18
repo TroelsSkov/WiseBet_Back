@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace WiseBet.backend.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialMigration : Migration
+    public partial class InitialDatabaseMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -15,7 +15,8 @@ namespace WiseBet.backend.Migrations
                 name: "BetPossibilities",
                 columns: table => new
                 {
-                    BetPossibilityID = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    BetPossibilityID = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     BetDescription = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
@@ -77,15 +78,14 @@ namespace WiseBet.backend.Migrations
                     ChatID = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     UserID = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     chat = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    TimeOfChat = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UserAccountUserID = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                    TimeOfChat = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Chats", x => x.ChatID);
                     table.ForeignKey(
-                        name: "FK_Chats_UserAccounts_UserAccountUserID",
-                        column: x => x.UserAccountUserID,
+                        name: "FK_Chats_UserAccounts_UserID",
+                        column: x => x.UserID,
                         principalTable: "UserAccounts",
                         principalColumn: "UserID",
                         onDelete: ReferentialAction.Cascade);
@@ -97,7 +97,6 @@ namespace WiseBet.backend.Migrations
                 {
                     PaymentID = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     UserID = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    UserAccountUserID = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     TimeOfPayment = table.Column<DateTime>(type: "datetime2", nullable: false),
                     PaymentAmount = table.Column<int>(type: "int", nullable: false),
                     PrePaymentBalance = table.Column<int>(type: "int", nullable: false)
@@ -106,8 +105,8 @@ namespace WiseBet.backend.Migrations
                 {
                     table.PrimaryKey("PK_PaymentHistories", x => x.PaymentID);
                     table.ForeignKey(
-                        name: "FK_PaymentHistories_UserAccounts_UserAccountUserID",
-                        column: x => x.UserAccountUserID,
+                        name: "FK_PaymentHistories_UserAccounts_UserID",
+                        column: x => x.UserID,
                         principalTable: "UserAccounts",
                         principalColumn: "UserID",
                         onDelete: ReferentialAction.Cascade);
@@ -121,7 +120,7 @@ namespace WiseBet.backend.Migrations
                     Amount = table.Column<int>(type: "int", nullable: false),
                     UserID = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     UserAccountUserID = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    BetPossibilityID = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    BetPossibilityID = table.Column<int>(type: "int", nullable: false),
                     RoundID = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
                 },
                 constraints: table =>
@@ -163,14 +162,14 @@ namespace WiseBet.backend.Migrations
                 column: "UserAccountUserID");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Chats_UserAccountUserID",
+                name: "IX_Chats_UserID",
                 table: "Chats",
-                column: "UserAccountUserID");
+                column: "UserID");
 
             migrationBuilder.CreateIndex(
-                name: "IX_PaymentHistories_UserAccountUserID",
+                name: "IX_PaymentHistories_UserID",
                 table: "PaymentHistories",
-                column: "UserAccountUserID");
+                column: "UserID");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Rounds_RoundResultID",

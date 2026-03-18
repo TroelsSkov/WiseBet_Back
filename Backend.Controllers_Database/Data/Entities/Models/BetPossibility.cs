@@ -7,7 +7,7 @@ namespace WiseBet.backend.Models
     public class BetPossibility
     {
     [Key]
-    public Guid BetPossibilityID {get; set;} = Guid.NewGuid();
+    public int BetPossibilityID {get; set;}
     public string BetDescription {get; set;}
 
     public ICollection<BetHistory> Bets {get; set;}

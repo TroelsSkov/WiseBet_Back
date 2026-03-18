@@ -14,7 +14,7 @@ namespace WiseBet.backend.Models
         public Guid UserID { get; set; }
         public UserAccount UserAccount { get; set; }
 
-        public Guid BetPossibilityID { get; set; }
+        public int BetPossibilityID { get; set; }
         public BetPossibility BetPossibility { get; set; }
 
         public Guid RoundID { get; set; }
