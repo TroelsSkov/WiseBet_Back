@@ -6,4 +6,6 @@ public class BetDto : IDto
     public int Amount { get; set; }
     public Guid UserId { get; set; }
     public int OutcomeBet { get; set; }
+    public string OutcomeDescription { get; set; }
+    public Guid RoundId { get; set; }
 }
