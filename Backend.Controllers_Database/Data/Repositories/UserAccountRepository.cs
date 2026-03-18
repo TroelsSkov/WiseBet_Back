@@ -27,7 +27,7 @@ namespace WiseBet.backend.IRepository
 
             return UserDtos;
         }
-        public override async Task<UserAccountDto?> GetByIdAsync(Guid id)
+        public override async Task<UserAccountDto> GetByIdAsync(Guid id)
         {
 
             var user = await context.UserAccounts.Where(u => u.UserID == id).FirstOrDefaultAsync();

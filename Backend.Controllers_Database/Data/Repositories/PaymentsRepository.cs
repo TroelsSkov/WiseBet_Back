@@ -11,16 +11,38 @@ namespace WiseBet.backend.IRepository
         }
         public override async Task<List<PaymentDto>> GetAllAsync()
         {
-            // Placeholder
-            return new List<PaymentDto>();
-        }
-        public override async Task<PaymentDto?> GetByIdAsync(Guid id)
-        {
-            // Placeholder
-            return new PaymentDto
+            var payments = await context.PaymentHistories.Include(p => p.UserAccount).ToListAsync();  // Maybe include is not needed?
+            List<PaymentDto> toRet = new();
+            foreach (var payment in payments)
             {
-                UserID = Guid.NewGuid()
+                toRet.Add(new PaymentDto
+                {
+                    ID = payment.PaymentID,
+                    UserID = payment.UserID,
+                    TimeOfPayment = payment.TimeOfPayment,
+                    PaymentAmount = payment.PaymentAmount,
+                    PrePaymentBalance = payment.PrePaymentBalance
+                });
+            }
+
+            return toRet;
+        }
+        public override async Task<PaymentDto> GetByIdAsync(Guid id)
+        {
+            var payment = await context.PaymentHistories.Where(p => p.PaymentID == id).Include(p => p.UserAccount).FirstOrDefaultAsync();
+            if (payment == null)
+                throw new KeyNotFoundException(this);
+
+            PaymentDto toRet = new PaymentDto
+            {
+                ID = payment.PaymentID,
+                UserID = payment.UserID,
+                TimeOfPayment = payment.TimeOfPayment,
+                PaymentAmount = payment.PaymentAmount,
+                PrePaymentBalance = payment.PrePaymentBalance
             };
+            // Placeholder
+            return toRet;
         }
         public override async Task PostAsync(PaymentDto dto)
         {
@@ -32,7 +54,7 @@ namespace WiseBet.backend.IRepository
         }
         public override async Task DeleteAsync(PaymentDto dto)
         {
-            
+
         }
     }
 }
