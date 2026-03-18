@@ -8,13 +8,14 @@ namespace WiseBet.backend.Models
     public class PaymentHistory
     {
         //GUID for sikkerhed? samt DTO såen vi ik returnerer password via. postman
-    [Key]
-    public Guid PaymentID{get; set;} = Guid.NewGuid();
-    public Guid UserID{get; set;}
-    public UserAccount UserAccount{get; set;}
-    public DateTime TimeOfPayment {get; set;} = DateTime.Now;
-    public int PaymentAmount{get; set;}
-    public int PrePaymentBalance{get; set;}
-    
+        [Key]
+        public Guid PaymentID { get; set; } = Guid.NewGuid();
+        public Guid UserID { get; set; }
+        [ForeignKey("UserID")]
+        public UserAccount UserAccount { get; set; }
+        public DateTime TimeOfPayment { get; set; } = DateTime.Now;
+        public int PaymentAmount { get; set; }
+        public int PrePaymentBalance { get; set; }
+
     }
 }
