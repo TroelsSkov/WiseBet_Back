@@ -47,11 +47,24 @@ namespace WiseBet.backend.IRepository
 
             return toRet;
         }
+        /// <summary>
+        /// Indsætter en ny betaling i databasen og opdaterer brugerens saldo med dto'ens 'PaymentAmount'. 
+        /// </summary>
+        /// <param name="dto"></param>
+        /// <returns>Returns nothing</returns>
+        /// <exception cref="InvalidParameterException"></exception>
         public override async Task PostAsync(PaymentDto dto)
         {
+            if (dto.PaymentAmount < 0)
+                throw new InvalidParameterException(this);
 
             var user = await m_userRepo.GetByIdAsync(dto.UserID);
             dto.PrePaymentBalance = user.Saldo;
+
+            // Updating usersaldo
+            user.Saldo += dto.PaymentAmount;
+            await m_userRepo.PutAsync(user.ID, user);
+
 
             PaymentHistory toAdd = new PaymentHistory
             {
@@ -59,7 +72,7 @@ namespace WiseBet.backend.IRepository
                 UserID = dto.UserID,
                 TimeOfPayment = dto.TimeOfPayment,
                 PaymentAmount = dto.PaymentAmount,
-                PrePaymentBalance = (int)dto.PrePaymentBalance
+                PrePaymentBalance = dto.PrePaymentBalance
             };
 
             await context.PaymentHistories.AddAsync(toAdd);
@@ -84,7 +97,7 @@ namespace WiseBet.backend.IRepository
                 throw new InvalidParameterException(this);
 
             payment.PaymentAmount = dto.PaymentAmount;
-            payment.PrePaymentBalance = (int)dto.PrePaymentBalance;
+            payment.PrePaymentBalance = dto.PrePaymentBalance;
             payment.TimeOfPayment = dto.TimeOfPayment;
             payment.UserID = dto.UserID;
 
