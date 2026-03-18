@@ -81,7 +81,8 @@ namespace WiseBet.backend.IRepository
 
 
         /// <summary>
-        /// Changes everything in the PaymentHistory entity.
+        /// Changes everything in the PaymentHistory entity excluding PrePaymentBalance.
+        /// Incase the user gets their PaymentAmount adjusted, the users current saldo will be updated with the difference of the old PaymentAmount and the new one. 
         /// </summary>
         /// <param name="id"></param>
         /// <param name="dto"></param>
@@ -93,11 +94,18 @@ namespace WiseBet.backend.IRepository
             var payment = await context.PaymentHistories.Where(p => id == p.PaymentID).Include(p => p.UserAccount).FirstOrDefaultAsync();
             if (payment == null)
                 throw new KeyNotFoundException(this);
-            if (dto.PaymentAmount < 0 || dto.PrePaymentBalance < 0)
+            if (dto.PaymentAmount < 0)
                 throw new InvalidParameterException(this);
 
+            // Updating user saldo
+            int diff = payment.PaymentAmount - dto.PaymentAmount;
+            var user = await m_userRepo.GetByIdAsync(dto.ID);
+            user.Saldo += diff;
+            if (user.Saldo < 0) // Do we want the user to owe us?
+                user.Saldo = 0;
+            await m_userRepo.PutAsync(user.ID, user);
+
             payment.PaymentAmount = dto.PaymentAmount;
-            payment.PrePaymentBalance = dto.PrePaymentBalance;
             payment.TimeOfPayment = dto.TimeOfPayment;
             payment.UserID = dto.UserID;
 
