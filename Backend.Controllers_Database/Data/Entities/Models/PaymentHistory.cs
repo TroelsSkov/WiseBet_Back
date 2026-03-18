@@ -12,7 +12,7 @@ namespace WiseBet.backend.Models
     public Guid PaymentID{get; private set;} = Guid.NewGuid();
     public Guid UserID{get; set;}
     public UserAccount UserAccount{get; set;}
-    public DateTime TimeOfPayment {get; private set;} = DateTime.Now;
+    public DateTime TimeOfPayment {get; set;} = DateTime.Now;
     public int PaymentAmount{get; set;}
     public int PrePaymentBalance{get; set;}
     
