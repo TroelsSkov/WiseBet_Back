@@ -39,19 +39,19 @@ namespace WiseBet.backend.IRepository
         }
         public override async Task PutAsync(Guid id, RoundDto dto)
         {
-            var round = await context.Rounds.Where(r => r.RoundID == id).FirstOrDefaultAsync();
-            if (round == null)
-                throw new KeyNotFoundException(this);
+            // var round = await context.Rounds.Where(r => r.RoundID == id).FirstOrDefaultAsync();
+            // if (round == null)
+            //     throw new KeyNotFoundException(this);
 
-            var putRound = await CreateRoundFromDto(dto);
+            // var putRound = await CreateRoundFromDto(dto);
 
-            round.Bets = putRound.Bets;
-            round.Outcome = putRound.Outcome;
-            round.TotalAmount = putRound.TotalAmount;
-            round.Payout = putRound.Payout;
-            round.Made = putRound.Made;
-            round.RoundDate = putRound.RoundDate;
-            
+            // round.Bets = putRound.Bets;
+            // round.Outcome = putRound.Outcome;
+            // round.TotalAmount = putRound.TotalAmount;
+            // round.Payout = putRound.Payout;
+            // round.Made = putRound.Made;
+            // round.RoundDate = putRound.RoundDate;
+
             await context.SaveChangesAsync();
         }
         public override async Task DeleteAsync(RoundDto dto)
@@ -100,15 +100,16 @@ namespace WiseBet.backend.IRepository
                 Made = dto.Earnings,
                 Bets = new List<BetHistory>()
             };
-            foreach (var bet in dto.Bets)
-            {
-                var toAdd = await context.BetHistories.Where(b => bet == b.BetHistoryID).FirstOrDefaultAsync();
+            if (dto.Bets.Count > 0)
+                foreach (var bet in dto.Bets)
+                {
+                    var toAdd = await context.BetHistories.Where(b => bet == b.BetHistoryID).FirstOrDefaultAsync();
 
-                if (toAdd == null)
-                    throw new KeyNotFoundException(this);
+                    if (toAdd == null)
+                        throw new KeyNotFoundException(this);
 
-                toRet.Bets.Add(toAdd);
-            }
+                    toRet.Bets.Add(toAdd);
+                }
             return toRet;
         }
 
