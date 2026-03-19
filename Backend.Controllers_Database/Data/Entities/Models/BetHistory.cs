@@ -21,7 +21,6 @@ namespace WiseBet.backend.Models
         public Outcome OutcomeBet { get; set; }
 
         public Guid RoundID { get; set; }
-        // [ForeignKey("RoundID")]
         public Round Round { get; set; }
     }
 }

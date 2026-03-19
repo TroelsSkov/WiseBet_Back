@@ -61,6 +61,7 @@ namespace WiseBet.backend.IRepository
                 throw new KeyNotFoundException(this);
 
             context.Rounds.Remove(round);
+            await context.SaveChangesAsync();
         }
 
         private RoundDto CreateRoundDtoFromRound(Round round)

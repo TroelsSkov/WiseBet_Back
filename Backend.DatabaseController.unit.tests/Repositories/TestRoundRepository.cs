@@ -115,6 +115,27 @@ public class TestRoundRepository
     }
 
     [Test]
+    public async Task Get_GetAllRoundsFromDB_TwoRoundsReturned()
+    {
+        RoundDto r1 = new RoundDto
+        {
+            ID = Guid.NewGuid(),
+            OutcomeId = 1,
+            OutcomeDescription = o2.OutcomeDescription
+        };
+        RoundDto r2 = new RoundDto
+        {
+            ID = Guid.NewGuid(),
+            OutcomeId = 2,
+            OutcomeDescription = o3.OutcomeDescription
+        };
+        Assert.DoesNotThrowAsync(async () => await m_uut.PostAsync(r1));
+        Assert.DoesNotThrowAsync(async () => await m_uut.PostAsync(r2));
+        var round = await m_uut.GetAllAsync();
+        Assert.That(round.Count, Is.EqualTo(2));
+    }
+
+    [Test]
     public async Task Put_UpdateRoundWithBetsAfterPlaced_BetsAddedToRound()
     {
         RoundDto r1 = new RoundDto
@@ -141,5 +162,67 @@ public class TestRoundRepository
         Assert.DoesNotThrowAsync(async () => await m_uut.PutAsync(r1.ID, r1));
         var round = await m_uut.GetByIdAsync(r1.ID);
         Assert.That(round.Bets.Count, Is.EqualTo(1));
+        Assert.That(round.Bets.First(), Is.EqualTo(b1.BetHistoryID));
+    }
+
+    [Test]
+    public async Task Delete_DeleteExsistingRound_sucess()
+    {
+        RoundDto r1 = new RoundDto
+        {
+            ID = Guid.NewGuid(),
+            OutcomeId = 1,
+            OutcomeDescription = o2.OutcomeDescription
+        };
+        await m_uut.PostAsync(r1);
+        Assert.DoesNotThrowAsync(async () => await m_uut.DeleteAsync(r1));
+    }
+    [Test]
+    public async Task Delete_DeleteExsistingRoundTwice_ThrowsKeyNoFoundException()
+    {
+        RoundDto r1 = new RoundDto
+        {
+            ID = Guid.NewGuid(),
+            OutcomeId = 1,
+            OutcomeDescription = o2.OutcomeDescription
+        };
+        await m_uut.PostAsync(r1);
+        Assert.DoesNotThrowAsync(async () => await m_uut.DeleteAsync(r1));
+        Assert.ThrowsAsync<WiseBet.backend.IRepository.KeyNotFoundException>(async () => await m_uut.DeleteAsync(r1));
+    }
+
+    [Test]
+    public async Task Delete_DeleteExsistingRound_BetsCascadeWithRound()
+    {
+                RoundDto r1 = new RoundDto
+        {
+            ID = Guid.NewGuid(),
+            OutcomeId = 1,
+            OutcomeDescription = o2.OutcomeDescription
+        };
+        await m_uut.PostAsync(r1);
+        BetHistory b1 = new BetHistory
+        {
+            BetHistoryID = Guid.NewGuid(),
+            RoundID = r1.ID,
+            OutcomeId = o1.OutcomeId,
+            UserID = u1.ID,
+            Amount = 200
+        };
+
+        await m_context.BetHistories.AddAsync(b1);
+        await m_context.SaveChangesAsync();
+
+        r1.Bets.Add(b1.BetHistoryID);
+
+        Assert.DoesNotThrowAsync(async () => await m_uut.PutAsync(r1.ID, r1));
+        var round = await m_uut.GetByIdAsync(r1.ID);
+        Assert.That(round.Bets.Count, Is.EqualTo(1));
+        Assert.That(round.Bets.First(), Is.EqualTo(b1.BetHistoryID));
+
+        Assert.DoesNotThrowAsync(async () => await m_uut.DeleteAsync(r1));
+
+        var bet = await m_context.BetHistories.Where(b => b.BetHistoryID == b1.BetHistoryID).FirstOrDefaultAsync();
+        Assert.That(bet,Is.Null);
     }
 }
