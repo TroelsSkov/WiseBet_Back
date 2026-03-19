@@ -1,3 +1,4 @@
+using System.Reflection.Metadata.Ecma335;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.EntityFrameworkCore;
 using WiseBet.backend.Data;
@@ -32,15 +33,31 @@ namespace WiseBet.backend.IRepository
         }
         public override async Task PostAsync(RoundDto dto)
         {
-
+            var RoundToAdd = await CreateRoundFromDto(dto);
+            await context.AddAsync(RoundToAdd);
+            await context.SaveChangesAsync();
         }
         public override async Task PutAsync(Guid id, RoundDto dto)
         {
+            var round = await context.Rounds.Where(r => r.RoundID == id).FirstOrDefaultAsync();
+            if (round == null)
+                throw new KeyNotFoundException(this);
 
+            round.TotalAmount = dto.TotalAmount;
+            round.Made = dto.Earnings;
+            round.Payout = dto.Payout;
+            round.RoundDate = dto.RoundPlayDate;
+            round.OutcomeId = dto.OutcomeId;
+
+            await context.SaveChangesAsync();
         }
         public override async Task DeleteAsync(RoundDto dto)
         {
-
+            var round = await context.Rounds.Where(r => r.RoundID == dto.ID).FirstOrDefaultAsync();
+            if (round == null)
+                throw new KeyNotFoundException(this);
+            
+            context.Rounds.Remove(round);
         }
 
         private RoundDto CreateRoundDtoFromRound(Round round)
@@ -67,5 +84,28 @@ namespace WiseBet.backend.IRepository
 
             return toRet;
         }
+        private async Task<Round> CreateRoundFromDto(RoundDto dto)
+        {
+            Round toRet = new Round
+            {
+                RoundID = dto.ID,
+                RoundDate = dto.RoundPlayDate,
+                OutcomeId = dto.OutcomeId,
+                TotalAmount = dto.TotalAmount,
+                Payout = dto.Payout,
+                Made = dto.Earnings
+            };
+            foreach (var bet in dto.Bets)
+            {
+                var toAdd = await context.BetHistories.Where(b => bet == b.BetHistoryID).FirstOrDefaultAsync();
+
+                if (toAdd == null)
+                    throw new KeyNotFoundException(this);
+
+                toRet.Bets.Add(toAdd);
+            }
+            return toRet;
+        }
+
     }
 }

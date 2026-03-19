@@ -9,7 +9,7 @@ namespace WiseBet.backend.Models
     {
         [Key]
         public Guid RoundID { get; set; } = Guid.NewGuid();
-        public DateTime RoundDate { get; init; } = DateTime.Now;
+        public DateTime RoundDate { get; set; } = DateTime.Now;
         public int? OutcomeId { get; set; }
         public int TotalAmount { get; set; }
         public int Payout { get; set; }
