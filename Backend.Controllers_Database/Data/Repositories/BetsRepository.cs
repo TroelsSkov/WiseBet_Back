@@ -60,9 +60,18 @@ namespace WiseBet.backend.IRepository
             var bet = await context.BetHistories.Where(b => b.BetHistoryID == dto.ID).FirstOrDefaultAsync();
             if (bet == null)
                 throw new KeyNotFoundException(this);
-                
+
             context.BetHistories.Remove(bet);
             await context.SaveChangesAsync();
+        }
+
+        public async Task<List<BetDto>> GetAllBetsForRound(Guid id)
+        {
+            var bets = await context.BetHistories.Where(b => b.RoundID == id).ToListAsync();
+            List<BetDto> toRet = new();
+            foreach (var bet in bets)
+                toRet.Add(CreateBetDtoFromBetHistory(bet));
+            return toRet;
         }
 
         private BetDto CreateBetDtoFromBetHistory(BetHistory bet)
