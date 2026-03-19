@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
 
@@ -12,10 +13,12 @@ namespace WiseBet.backend.Models
         public int Amount { get; set; }
 
         public Guid UserID { get; set; }
+        [ForeignKey("UserID")]
         public UserAccount UserAccount { get; set; }
 
-        public Guid BetPossibilityID { get; set; }
-        public BetPossibility BetPossibility { get; set; }
+        public int? OutcomeId { get; set; }
+        [ForeignKey("OutcomeId")]
+        public Outcome OutcomeBet { get; set; }
 
         public Guid RoundID { get; set; }
         public Round Round { get; set; }

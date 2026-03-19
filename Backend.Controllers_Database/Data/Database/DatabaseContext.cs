@@ -6,12 +6,11 @@ namespace WiseBet.backend.Data
     [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     public class DatabaseContext : DbContext
     {
-        private readonly string? DbPath;
         public DbSet<Chat> Chats { get; set; }
         public DbSet<UserAccount> UserAccounts { get; set; }
         public DbSet<PaymentHistory> PaymentHistories { get; set; }
         public DbSet<BetHistory> BetHistories { get; set; }
-        public DbSet<BetPossibility> BetPossibilities { get; set; }
+        public DbSet<Outcome> Outcomes { get; set; }
         public DbSet<Round> Rounds { get; set; }
         public DbSet<RoundResult> Results { get; set; }
 
