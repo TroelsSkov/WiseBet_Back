@@ -101,6 +101,20 @@ public class TestRoundRepository
     }
 
     [Test]
+    public async Task Post_InitialCreatingOfRoundWithNonExsisingBets_ThrowsKeyNotFoundException()
+    {
+        RoundDto r1 = new RoundDto
+        {
+            ID = Guid.NewGuid(),
+            OutcomeId = 1,
+            OutcomeDescription = o2.OutcomeDescription,
+            Bets = new List<Guid> { Guid.NewGuid() }
+        };
+
+        Assert.ThrowsAsync<WiseBet.backend.IRepository.KeyNotFoundException>(async () => await m_uut.PostAsync(r1));
+    }
+
+    [Test]
     public async Task Get_GetExsistingRoundFromDb_RoundWithIdReturned()
     {
         RoundDto r1 = new RoundDto
@@ -112,6 +126,18 @@ public class TestRoundRepository
         Assert.DoesNotThrowAsync(async () => await m_uut.PostAsync(r1));
         var round = await m_uut.GetByIdAsync(r1.ID);
         Assert.That(round, Is.Not.Null);
+    }
+
+    [Test]
+    public async Task Get_GetNonExsistingRound_ThrowsKeyNotFoundException()
+    {
+        RoundDto r1 = new RoundDto
+        {
+            ID = Guid.NewGuid(),
+            OutcomeId = 1,
+            OutcomeDescription = o2.OutcomeDescription
+        };
+        Assert.ThrowsAsync<WiseBet.backend.IRepository.KeyNotFoundException>(async () => await m_uut.GetByIdAsync(r1.ID));
     }
 
     [Test]
@@ -166,6 +192,18 @@ public class TestRoundRepository
     }
 
     [Test]
+    public async Task Put_UpdateNonExsistingRound_ThrowsKeyNotFoundException()
+    {
+        RoundDto r1 = new RoundDto
+        {
+            ID = Guid.NewGuid(),
+            OutcomeId = 1,
+            OutcomeDescription = o2.OutcomeDescription
+        };
+        Assert.ThrowsAsync<WiseBet.backend.IRepository.KeyNotFoundException>(async () => await m_uut.PutAsync(r1.ID, r1));
+    }
+
+    [Test]
     public async Task Delete_DeleteExsistingRound_sucess()
     {
         RoundDto r1 = new RoundDto
@@ -194,7 +232,7 @@ public class TestRoundRepository
     [Test]
     public async Task Delete_DeleteExsistingRound_BetsCascadeWithRound()
     {
-                RoundDto r1 = new RoundDto
+        RoundDto r1 = new RoundDto
         {
             ID = Guid.NewGuid(),
             OutcomeId = 1,
@@ -223,6 +261,6 @@ public class TestRoundRepository
         Assert.DoesNotThrowAsync(async () => await m_uut.DeleteAsync(r1));
 
         var bet = await m_context.BetHistories.Where(b => b.BetHistoryID == b1.BetHistoryID).FirstOrDefaultAsync();
-        Assert.That(bet,Is.Null);
+        Assert.That(bet, Is.Null);
     }
 }

@@ -39,18 +39,18 @@ namespace WiseBet.backend.IRepository
         }
         public override async Task PutAsync(Guid id, RoundDto dto)
         {
-            // var round = await context.Rounds.Where(r => r.RoundID == id).FirstOrDefaultAsync();
-            // if (round == null)
-            //     throw new KeyNotFoundException(this);
+            var round = await context.Rounds.Where(r => r.RoundID == id).FirstOrDefaultAsync();
+            if (round == null)
+                throw new KeyNotFoundException(this);
 
-            // var putRound = await CreateRoundFromDto(dto);
+            var putRound = await CreateRoundFromDto(dto);
 
-            // round.Bets = putRound.Bets;
-            // round.Outcome = putRound.Outcome;
-            // round.TotalAmount = putRound.TotalAmount;
-            // round.Payout = putRound.Payout;
-            // round.Made = putRound.Made;
-            // round.RoundDate = putRound.RoundDate;
+            round.Bets = putRound.Bets;
+            round.Outcome = putRound.Outcome;
+            round.TotalAmount = putRound.TotalAmount;
+            round.Payout = putRound.Payout;
+            round.Made = putRound.Made;
+            round.RoundDate = putRound.RoundDate;
 
             await context.SaveChangesAsync();
         }
