@@ -163,4 +163,164 @@ public class TestBetRepository
 
         Assert.ThrowsAsync<DbUpdateException>(async () => await m_uut.PostAsync(b1));
     }
+
+    [Test]
+    public async Task Get_GetAllBets_ListCountIsTwo()
+    {
+        BetDto b1 = new BetDto
+        {
+            ID = Guid.NewGuid(),
+            UserId = u1.ID,
+            RoundId = r1.ID,
+            OutcomeID = o1.OutcomeId,
+            OutcomeDescription = o1.OutcomeDescription,
+            Amount = 200
+        };
+        BetDto b2 = new BetDto
+        {
+            ID = Guid.NewGuid(),
+            UserId = u2.ID,
+            RoundId = r2.ID,
+            OutcomeID = o3.OutcomeId,
+            OutcomeDescription = o3.OutcomeDescription,
+            Amount = 200
+        };
+        await m_uut.PostAsync(b1);
+        await m_uut.PostAsync(b2);
+
+        var bets = await m_uut.GetAllAsync();
+        Assert.That(bets.Count, Is.EqualTo(2));
+    }
+
+    [Test]
+    public async Task Get_GetAllBetsEmptyDb_ReturnsEmptyList()
+    {
+        var bets = await m_uut.GetAllAsync();
+        Assert.That(bets, Is.Not.Null);
+        Assert.That(bets.Count, Is.EqualTo(0));
+    }
+    [Test]
+    public async Task Get_GetExsistingBetById_ReturnBetDto()
+    {
+        BetDto b1 = new BetDto
+        {
+            ID = Guid.NewGuid(),
+            UserId = u1.ID,
+            RoundId = r1.ID,
+            OutcomeID = o1.OutcomeId,
+            OutcomeDescription = o1.OutcomeDescription,
+            Amount = 200
+        };
+        BetDto b2 = new BetDto
+        {
+            ID = Guid.NewGuid(),
+            UserId = u2.ID,
+            RoundId = r2.ID,
+            OutcomeID = o3.OutcomeId,
+            OutcomeDescription = o3.OutcomeDescription,
+            Amount = 200
+        };
+        await m_uut.PostAsync(b1);
+        await m_uut.PostAsync(b2);
+
+        var bet = await m_uut.GetByIdAsync(b1.ID);
+        Assert.That(bet, Is.Not.Null);
+        Assert.That(bet.ID, Is.EqualTo(b1.ID));
+    }
+
+    [Test]
+    public async Task Get_GetNonExsistingBet_ThrowsKeyNotFoundException()
+    {
+        BetDto b1 = new BetDto
+        {
+            ID = Guid.NewGuid(),
+            UserId = u1.ID,
+            RoundId = r1.ID,
+            OutcomeID = o1.OutcomeId,
+            OutcomeDescription = o1.OutcomeDescription,
+            Amount = 200
+        };
+        BetDto b2 = new BetDto
+        {
+            ID = Guid.NewGuid(),
+            UserId = u2.ID,
+            RoundId = r2.ID,
+            OutcomeID = o3.OutcomeId,
+            OutcomeDescription = o3.OutcomeDescription,
+            Amount = 200
+        };
+        await m_uut.PostAsync(b1);
+        await m_uut.PostAsync(b2);
+
+        Assert.ThrowsAsync<WiseBet.backend.IRepository.KeyNotFoundException>(async () => await m_uut.GetByIdAsync(Guid.NewGuid()));
+    }
+
+    [Test]
+    public async Task Put_ChangeAmountOfExsisingBet_ValuesUpdated()
+    {
+        BetDto b1 = new BetDto
+        {
+            ID = Guid.NewGuid(),
+            UserId = u1.ID,
+            RoundId = r1.ID,
+            OutcomeID = o1.OutcomeId,
+            OutcomeDescription = o1.OutcomeDescription,
+            Amount = 200
+        };
+        await m_uut.PostAsync(b1);
+
+        b1.Amount = 1000;
+
+        Assert.DoesNotThrowAsync(async () => await m_uut.PutAsync(b1.ID, b1));
+        var bet = await m_uut.GetByIdAsync(b1.ID);
+
+        Assert.That(bet.Amount, Is.EqualTo(1000));
+    }
+    [Test]
+    public async Task Put_ChangeAmountOfNonExsisingBet_ThrowsKeyNotFoundException()
+    {
+        BetDto b1 = new BetDto
+        {
+            ID = Guid.NewGuid(),
+            UserId = u1.ID,
+            RoundId = r1.ID,
+            OutcomeID = o1.OutcomeId,
+            OutcomeDescription = o1.OutcomeDescription,
+            Amount = 200
+        };
+        await m_uut.PostAsync(b1);
+        Assert.ThrowsAsync<WiseBet.backend.IRepository.KeyNotFoundException>(async () => await m_uut.PutAsync(Guid.NewGuid(), b1));
+    }
+    [Test]
+    public async Task Delete_DeleteExsistingBet_Sucess()
+    {
+        BetDto b1 = new BetDto
+        {
+            ID = Guid.NewGuid(),
+            UserId = u1.ID,
+            RoundId = r1.ID,
+            OutcomeID = o1.OutcomeId,
+            OutcomeDescription = o1.OutcomeDescription,
+            Amount = 200
+        };
+        await m_uut.PostAsync(b1);
+        Assert.DoesNotThrowAsync(async () => await m_uut.DeleteAsync(b1));
+    }
+    [Test]
+    public async Task Delete_DeleteExsistingBetTwice_ThrowsKeyNotFoundException()
+    {
+        BetDto b1 = new BetDto
+        {
+            ID = Guid.NewGuid(),
+            UserId = u1.ID,
+            RoundId = r1.ID,
+            OutcomeID = o1.OutcomeId,
+            OutcomeDescription = o1.OutcomeDescription,
+            Amount = 200
+        };
+        await m_uut.PostAsync(b1);
+
+        Assert.DoesNotThrowAsync(async () => await m_uut.DeleteAsync(b1));
+        Assert.ThrowsAsync<WiseBet.backend.IRepository.KeyNotFoundException>(async () => await m_uut.DeleteAsync(b1));
+    }
 }
