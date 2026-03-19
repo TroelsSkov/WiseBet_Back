@@ -16,7 +16,7 @@ namespace WiseBet.backend.Models
         [ForeignKey("UserID")]
         public UserAccount UserAccount { get; set; }
 
-        public int? OutcomeId { get; set; }
+        public int OutcomeId { get; set; }
         [ForeignKey("OutcomeId")]
         public Outcome OutcomeBet { get; set; }
 
