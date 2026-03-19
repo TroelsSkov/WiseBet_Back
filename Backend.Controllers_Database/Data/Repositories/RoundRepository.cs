@@ -31,12 +31,24 @@ namespace WiseBet.backend.IRepository
             RoundDto toRet = CreateRoundDtoFromRound(round);
             return toRet;
         }
+        /// <summary>
+        /// Funktionen opretter en Models/Round i vores database. Her er bets, amounts osv null. Runden skal opdateres efter spillets runde afsluttes ellers forbliver værdierne null. 
+        /// </summary>
+        /// <param name="dto"></param>
+        /// <returns></returns>
         public override async Task PostAsync(RoundDto dto)
         {
             var RoundToAdd = await CreateRoundFromDto(dto);
             await context.AddAsync(RoundToAdd);
             await context.SaveChangesAsync();
         }
+        /// <summary>
+        /// Opdaterer runden, således nye bets og amounts passer den givne dto. Tager en Guid og RoundDto. Anvend denne efter spillene til at opdaterer runderne. 
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="dto"></param>
+        /// <returns></returns>
+        /// <exception cref="KeyNotFoundException"></exception>
         public override async Task PutAsync(Guid id, RoundDto dto)
         {
             var round = await context.Rounds.Where(r => r.RoundID == id).FirstOrDefaultAsync();
