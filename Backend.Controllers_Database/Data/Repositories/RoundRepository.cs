@@ -29,7 +29,7 @@ namespace WiseBet.backend.IRepository
             if (round == null)
                 throw new KeyNotFoundException(this);
             RoundDto toRet = CreateRoundDtoFromRound(round);
-            return new RoundDto();
+            return toRet;
         }
         public override async Task PostAsync(RoundDto dto)
         {
@@ -43,12 +43,15 @@ namespace WiseBet.backend.IRepository
             if (round == null)
                 throw new KeyNotFoundException(this);
 
-            round.TotalAmount = dto.TotalAmount;
-            round.Made = dto.Earnings;
-            round.Payout = dto.Payout;
-            round.RoundDate = dto.RoundPlayDate;
-            round.OutcomeId = dto.OutcomeId;
+            var putRound = await CreateRoundFromDto(dto);
 
+            round.Bets = putRound.Bets;
+            round.Outcome = putRound.Outcome;
+            round.TotalAmount = putRound.TotalAmount;
+            round.Payout = putRound.Payout;
+            round.Made = putRound.Made;
+            round.RoundDate = putRound.RoundDate;
+            
             await context.SaveChangesAsync();
         }
         public override async Task DeleteAsync(RoundDto dto)
@@ -56,7 +59,7 @@ namespace WiseBet.backend.IRepository
             var round = await context.Rounds.Where(r => r.RoundID == dto.ID).FirstOrDefaultAsync();
             if (round == null)
                 throw new KeyNotFoundException(this);
-            
+
             context.Rounds.Remove(round);
         }
 
@@ -71,16 +74,17 @@ namespace WiseBet.backend.IRepository
                 Earnings = round.Made
             };
 
-            if (round.OutcomeId != null)
+            if (round.Outcome != null)
             {
-                toRet.OutcomeId = (int)round.OutcomeId;
+                toRet.OutcomeId = round.OutcomeId;
                 toRet.OutcomeDescription = round.Outcome.OutcomeDescription;
             }
 
-            foreach (var bet in round.Bets)
-            {
-                toRet.Bets.Add(bet.BetHistoryID);
-            }
+            if (round.Bets != null)
+                foreach (var bet in round.Bets)
+                {
+                    toRet.Bets.Add(bet.BetHistoryID);
+                }
 
             return toRet;
         }
@@ -93,7 +97,8 @@ namespace WiseBet.backend.IRepository
                 OutcomeId = dto.OutcomeId,
                 TotalAmount = dto.TotalAmount,
                 Payout = dto.Payout,
-                Made = dto.Earnings
+                Made = dto.Earnings,
+                Bets = new List<BetHistory>()
             };
             foreach (var bet in dto.Bets)
             {
