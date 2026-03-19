@@ -256,6 +256,75 @@ public class TestBetRepository
     }
 
     [Test]
+    public async Task Get_GetAllBetsFromExistingRound_ListCountIsTwo()
+    {
+        BetDto b1 = new BetDto
+        {
+            ID = Guid.NewGuid(),
+            UserId = u1.ID,
+            RoundId = r1.ID,
+            OutcomeID = o1.OutcomeId,
+            OutcomeDescription = o1.OutcomeDescription,
+            Amount = 200
+        };
+        BetDto b2 = new BetDto
+        {
+            ID = Guid.NewGuid(),
+            UserId = u2.ID,
+            RoundId = r1.ID,
+            OutcomeID = o3.OutcomeId,
+            OutcomeDescription = o3.OutcomeDescription,
+            Amount = 200
+        };
+        BetDto b3 = new BetDto
+        {
+            ID = Guid.NewGuid(),
+            UserId = u1.ID,
+            RoundId = r2.ID,
+            OutcomeID = o3.OutcomeId,
+            OutcomeDescription = o3.OutcomeDescription,
+            Amount = 200
+        };
+
+        await m_uut.PostAsync(b1);
+        await m_uut.PostAsync(b2);
+        await m_uut.PostAsync(b3);
+
+        var betsR1 = await m_uut.GetAllBetsForRound(r1.ID);
+        Assert.That(betsR1, Is.Not.Null);
+        Assert.That(betsR1.Count, Is.EqualTo(2));
+    }
+    [Test]
+    public async Task Get_GetAllBetsFromNonExsistingRound_ReturnsEmptyList()
+    {
+        BetDto b1 = new BetDto
+        {
+            ID = Guid.NewGuid(),
+            UserId = u1.ID,
+            RoundId = r1.ID,
+            OutcomeID = o1.OutcomeId,
+            OutcomeDescription = o1.OutcomeDescription,
+            Amount = 200
+        };
+        BetDto b2 = new BetDto
+        {
+            ID = Guid.NewGuid(),
+            UserId = u2.ID,
+            RoundId = r2.ID,
+            OutcomeID = o3.OutcomeId,
+            OutcomeDescription = o3.OutcomeDescription,
+            Amount = 200
+        };
+
+        await m_uut.PostAsync(b1);
+        await m_uut.PostAsync(b2);
+
+        var bets = await m_uut.GetAllBetsForRound(Guid.NewGuid());
+        Assert.That(bets, Is.Not.Null);
+        Assert.That(bets.Count, Is.EqualTo(0));
+    }
+
+    [Test]
     public async Task Put_ChangeAmountOfExsisingBet_ValuesUpdated()
     {
         BetDto b1 = new BetDto
