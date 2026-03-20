@@ -12,7 +12,7 @@ using WiseBet.backend.Data;
 namespace WiseBet.backend.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20260318184458_InitialMigration")]
+    [Migration("20260320104423_InitialMigration")]
     partial class InitialMigration
     {
         /// <inheritdoc />
@@ -34,13 +34,10 @@ namespace WiseBet.backend.Migrations
                     b.Property<int>("Amount")
                         .HasColumnType("int");
 
-                    b.Property<int?>("OutcomeId")
+                    b.Property<int>("OutcomeId")
                         .HasColumnType("int");
 
                     b.Property<Guid>("RoundID")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("UserAccountUserID")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("UserID")
@@ -52,7 +49,7 @@ namespace WiseBet.backend.Migrations
 
                     b.HasIndex("RoundID");
 
-                    b.HasIndex("UserAccountUserID");
+                    b.HasIndex("UserID");
 
                     b.ToTable("BetHistories");
                 });
@@ -128,13 +125,13 @@ namespace WiseBet.backend.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<int>("Made")
+                    b.Property<int?>("Made")
                         .HasColumnType("int");
 
                     b.Property<int?>("OutcomeId")
                         .HasColumnType("int");
 
-                    b.Property<int>("Payout")
+                    b.Property<int?>("Payout")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("RoundDate")
@@ -143,7 +140,7 @@ namespace WiseBet.backend.Migrations
                     b.Property<Guid?>("RoundResultID")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<int>("TotalAmount")
+                    b.Property<int?>("TotalAmount")
                         .HasColumnType("int");
 
                     b.HasKey("RoundID");
@@ -196,7 +193,9 @@ namespace WiseBet.backend.Migrations
                 {
                     b.HasOne("WiseBet.backend.Models.Outcome", "OutcomeBet")
                         .WithMany()
-                        .HasForeignKey("OutcomeId");
+                        .HasForeignKey("OutcomeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("WiseBet.backend.Models.Round", "Round")
                         .WithMany("Bets")
@@ -206,7 +205,7 @@ namespace WiseBet.backend.Migrations
 
                     b.HasOne("WiseBet.backend.Models.UserAccount", "UserAccount")
                         .WithMany("BetHistories")
-                        .HasForeignKey("UserAccountUserID")
+                        .HasForeignKey("UserID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

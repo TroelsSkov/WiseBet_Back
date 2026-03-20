@@ -44,6 +44,7 @@ namespace WiseBet.backend.IRepository
                 TimeOfChat = chat.TimeOfChat
             };
         }
+///
         public override async Task PostAsync(ChatDto dto)
         {
             Chat toAdd = new Chat
