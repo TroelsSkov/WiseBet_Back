@@ -1,18 +1,19 @@
 using Microsoft.AspNetCore.Mvc;
 using WiseBet.backend.Data;
 using WiseBet.backend.Controllers.DTOs;
+using Microsoft.AspNetCore.SignalR;
 namespace WiseBet.backend.Controllers{
 //Https:localhost:5277/Api/UserAccounts
     [Route("Api/Games/[Controller]")]
     [ApiController]
     [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
-    public class CoinFlipController
-    {
-        public CoinFlipController(DatabaseContext DbContext)
+    public class Coinflip
+{
+        public void CoinFlip(DatabaseContext DbContext)
         {
             
         }
-        
+
         [HttpGet("PlayRound")]
         public async Task<CoinFlipDTO> PlayRound()
         {

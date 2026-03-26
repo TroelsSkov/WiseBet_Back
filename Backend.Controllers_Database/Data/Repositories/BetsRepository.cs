@@ -97,7 +97,6 @@ namespace WiseBet.backend.IRepository
                 Amount = bet.Amount,
                 OutcomeId = bet.OutcomeID
             };
-
             return toRet;
         }
     }

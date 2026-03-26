@@ -4,6 +4,7 @@ using WiseBet.backend.Data;
 using Microsoft.EntityFrameworkCore.SqlServer;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using WiseBet.backend.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,7 +14,7 @@ builder.Services.AddControllers();
 
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
-
+builder.Services.AddSignalR();
 var app = builder.Build();
 app.MapOpenApi();
 app.MapScalarApiReference();
@@ -28,7 +29,7 @@ using (var scope = app.Services.CreateScope())
     var seed = new DataSeed(context);
     seed.Seed();
 }
-
+app.MapHub<CoinFlipHub>("/CoinFlipHub");
 app.Run();
 
 
