@@ -1,10 +1,6 @@
-using Microsoft.AspNetCore.Mvc;
-using WiseBet.backend.DTOs;
 using WiseBet.backend.Controllers.DTOs;
 using WiseBet.backend.IRepository;
-using Microsoft.AspNetCore.SignalR;
-using Sprache;
-using WiseBet.backend.Data;
+using WiseBet.backend.DTOs;
 namespace WiseBet.backend.Services;
 
 public enum CoinSide
@@ -30,8 +26,8 @@ public class CoinFlipService : ICoinflipService
         {
             return new CoinFlipDTO
             {
-                fail = true,
-                message = "User doesnt exist"
+                Fail = true,
+                Message = "User doesnt exist"
             };
         }
 
@@ -39,8 +35,8 @@ public class CoinFlipService : ICoinflipService
         {
             return new CoinFlipDTO
             {
-                fail = true,
-                message = "Amount is less or equal to zero"
+                Fail = true,
+                Message = "Amount is less or equal to zero"
             };
         };
 
@@ -48,8 +44,8 @@ public class CoinFlipService : ICoinflipService
         {
             return new CoinFlipDTO
             {
-                fail = true,
-                message = "You cant afford this bet"
+                Fail = true,
+                Message = "You cant afford this bet"
             };
         };
 
@@ -63,8 +59,8 @@ public class CoinFlipService : ICoinflipService
             {
             LandingSide = (int)CoinResult,
             Winnings = IsWin ? 2 * Amount : 0,
-            fail = false,
-            message = IsWin? "You Won" : "You almost won try again quickly"
+            Fail = false,
+            Message = IsWin? "You Won" : "You almost won try again quickly"
             };
     }
     //does something when a user connects

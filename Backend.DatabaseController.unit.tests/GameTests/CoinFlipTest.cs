@@ -2,17 +2,8 @@ using WiseBet.backend.IRepository;
 using WiseBet.backend.Data;
 using Microsoft.EntityFrameworkCore;
 using WiseBet.backend.DTOs;
-using WiseBet.backend.Controllers.DTOs;
 using WiseBet.backend.Services;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Data.Sqlite;
-using Microsoft.Extensions.Configuration;
-using WiseBet.backend.Models;
-using WiseBet.backend.Hubs;
-using Microsoft.AspNetCore.SignalR;
 using NSubstitute;
-using NUnit.Framework;
-using NSubstitute.Core.Arguments;
 using WiseBet.backend.Controllers.DTOs;
 using NUnit.Framework.Internal;
 namespace Backend.DatabaseController.unit.tests.Hubs;
@@ -41,8 +32,8 @@ public class CoinFlipTest
         _mockRepo.GetByIdAsync(userId).Returns(Troels);
 
         var result = await _uut.PlayRound(userId, 5, CoinSide.plat);
-        Assert.That(result.fail, Is.True);
-        Assert.That(result.message, Is.EqualTo("You cant afford this bet"));
+        Assert.That(result.Fail, Is.True);
+        Assert.That(result.Message, Is.EqualTo("You cant afford this bet"));
     }
 
     [Test]
@@ -53,8 +44,8 @@ public class CoinFlipTest
         _mockRepo.GetByIdAsync(userId).Returns(Troels);
 
         var result = await _uut.PlayRound(userId, -5, CoinSide.plat);
-        Assert.That(result.fail, Is.True);
-        Assert.That(result.message, Is.EqualTo("Amount is less or equal to zero"));
+        Assert.That(result.Fail, Is.True);
+        Assert.That(result.Message, Is.EqualTo("Amount is less or equal to zero"));
     }
 
     [Test]
@@ -63,8 +54,8 @@ public class CoinFlipTest
         Guid userId = Guid.NewGuid();
         _mockRepo.GetByIdAsync(userId).Returns((UserAccountDto)null);
         var result = await _uut.PlayRound(userId, 10, CoinSide.plat);
-        Assert.That(result.fail, Is.True);
-        Assert.That(result.message, Is.EqualTo("User doesnt exist"));
+        Assert.That(result.Fail, Is.True);
+        Assert.That(result.Message, Is.EqualTo("User doesnt exist"));
     }
 
 
@@ -77,8 +68,8 @@ public class CoinFlipTest
         _mockRepo.GetByIdAsync(userId).Returns(Troels);
 
         var result = await _uut.PlayRound(userId, 50, CoinSide.plat);
-        Assert.That(result.fail, Is.False);
-        Assert.That(result.message, Is.AnyOf("You Won", "You almost won try again quickly"));
+        Assert.That(result.Fail, Is.False);
+        Assert.That(result.Message, Is.AnyOf("You Won", "You almost won try again quickly"));
         Assert.That(result.Winnings, Is.AnyOf(100,0));
     }
     
