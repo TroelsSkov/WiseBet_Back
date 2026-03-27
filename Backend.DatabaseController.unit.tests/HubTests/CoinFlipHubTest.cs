@@ -64,7 +64,7 @@ public class CoinFlipHubTest
         int winnings = result.Winnings;
 
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.LandingSide, Is.EqualTo(0|1));
+        Assert.That(result.LandingSide, Is.AnyOf(0,1));
 
         if (LandingSide == (int)Chosen)
         {
@@ -75,38 +75,6 @@ public class CoinFlipHubTest
             Assert.That(winnings, Is.EqualTo(0));
         }
     }
-
-    [Test]
-    public async Task Playround_LegalAmount_CorrectLogicLose()
-    {
-        int BetAmount = 100;
-        CoinSide Chosen = CoinSide.krone;
-        object[] CapturedArgs = null;
-        
-        await _mockCallerProxy.SendCoreAsync("UpdateClient", 
-        Arg.Do<object[]>(args => CapturedArgs = args),
-        Arg.Any<CancellationToken>());
-        
-        await _uut.PlayRound(BetAmount, Chosen);
-
-        await _mockCallerProxy.Received(1).SendCoreAsync("UpdateClient", Arg.Any<object[]>(), Arg.Any<CancellationToken>());
-
-        var result = CapturedArgs[0] as CoinFlipDTO;
-        int LandingSide = result.LandingSide;
-        int winnings = result.Winnings;
-
-        Assert.That(result, Is.Not.Null);
-
-        if (LandingSide == (int)Chosen)
-        {
-            Assert.That(winnings, Is.EqualTo(BetAmount*2));
-        }
-        else
-        {
-            Assert.That(winnings, Is.EqualTo(0));
-        }
-    }
-    
     
     
 
