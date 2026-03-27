@@ -9,6 +9,8 @@ using WiseBet.backend.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using NSubstitute;
 using NUnit.Framework;
+using NSubstitute.Core.Arguments;
+using WiseBet.backend.Controllers.DTOs;
 namespace Backend.DatabaseController.unit.tests.Hubs;
 [TestFixture]
 public class CoinFlipHubTest
@@ -28,7 +30,7 @@ public class CoinFlipHubTest
             Clients = _mockClients
         };
     }
-//this is always used with hubs to free memory.
+//this is always used with hubs to free mo
     [TearDown]
     public void TearDown()
     {
@@ -39,7 +41,73 @@ public class CoinFlipHubTest
     public async Task PlayRound_IllegalAmount_SendError()
     {
         await _uut.PlayRound(-5, CoinSide.plat);
-        await _mockCallerProxy.Received(1).SendCoreAsync("RecieveError", Arg.Is<object[]>(args => args[0].ToString() == "Amount is less or equal to zero"));
+        await _mockCallerProxy.Received(1).SendCoreAsync("ErrorMessageToClient", Arg.Is<object[]>(args => args[0].ToString() == "Amount is less or equal to zero"));
     }
-//todo test PlayRound_LegalAmount_CorrectRoundLogic
+
+    [Test]
+    public async Task Playround_LegalAmount_CorrectLogicWin()
+    {
+        int BetAmount = 100;
+        CoinSide Chosen = CoinSide.krone;
+        object[] CapturedArgs = null;
+        
+        await _mockCallerProxy.SendCoreAsync("UpdateClient", 
+        Arg.Do<object[]>(args => CapturedArgs = args),
+        Arg.Any<CancellationToken>());
+        
+        await _uut.PlayRound(BetAmount, Chosen);
+
+        await _mockCallerProxy.Received(1).SendCoreAsync("UpdateClient", Arg.Any<object[]>(), Arg.Any<CancellationToken>());
+
+        var result = CapturedArgs[0] as CoinFlipDTO;
+        int LandingSide = result.LandingSide;
+        int winnings = result.Winnings;
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.LandingSide, Is.EqualTo(0|1));
+
+        if (LandingSide == (int)Chosen)
+        {
+            Assert.That(winnings, Is.EqualTo(BetAmount*2));
+        }
+        else
+        {
+            Assert.That(winnings, Is.EqualTo(0));
+        }
+    }
+
+    [Test]
+    public async Task Playround_LegalAmount_CorrectLogicLose()
+    {
+        int BetAmount = 100;
+        CoinSide Chosen = CoinSide.krone;
+        object[] CapturedArgs = null;
+        
+        await _mockCallerProxy.SendCoreAsync("UpdateClient", 
+        Arg.Do<object[]>(args => CapturedArgs = args),
+        Arg.Any<CancellationToken>());
+        
+        await _uut.PlayRound(BetAmount, Chosen);
+
+        await _mockCallerProxy.Received(1).SendCoreAsync("UpdateClient", Arg.Any<object[]>(), Arg.Any<CancellationToken>());
+
+        var result = CapturedArgs[0] as CoinFlipDTO;
+        int LandingSide = result.LandingSide;
+        int winnings = result.Winnings;
+
+        Assert.That(result, Is.Not.Null);
+
+        if (LandingSide == (int)Chosen)
+        {
+            Assert.That(winnings, Is.EqualTo(BetAmount*2));
+        }
+        else
+        {
+            Assert.That(winnings, Is.EqualTo(0));
+        }
+    }
+    
+    
+    
+
 }

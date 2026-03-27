@@ -13,21 +13,22 @@ public enum CoinSide
     {
         public async Task PlayRound(int Amount, CoinSide ChosenSide)
         {
-            await Clients.Caller.SendAsync("Recieve round bet", Amount, ChosenSide);
+            await Clients.Caller.SendAsync("RecieveRoundBet", Amount, ChosenSide);
             if (Amount <=0)
                 {
-                    await Clients.Caller.SendAsync("RecieveError", "Amount is less or equal to zero");
+                    await Clients.Caller.SendAsync("ErrorMessageToClient", "Amount is less or equal to zero");
                     return;
                 };
+
             //todo check saldo
             CoinSide CoinResult = (CoinSide)Random.Shared.Next(0,2);
             bool IsWin = CoinResult==ChosenSide;
             
-            await Clients.Caller.SendAsync("RecieveResult", new {
-                LandingSide = CoinResult.ToString(),
-                IsWinner = IsWin,
+            await Clients.Caller.SendAsync("UpdateClient", new CoinFlipDTO {
+                LandingSide = (int)CoinResult,
                 Winnings = IsWin ? 2*Amount: 0
             });
+            
             //todo connect to db
 
         
