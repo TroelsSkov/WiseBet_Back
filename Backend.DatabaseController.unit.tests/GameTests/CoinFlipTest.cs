@@ -31,7 +31,7 @@ public class CoinFlipTest
         var Troels = new UserAccountDto { ID = userId, Saldo = 1, };
         _mockRepo.GetByIdAsync(userId).Returns(Troels);
 
-        var result = await _uut.PlayRound(userId, 5, CoinSide.plat);
+        var result = await _uut.PlayRound(userId, 5, CoinSide.Wise);
         Assert.That(result.Fail, Is.True);
         Assert.That(result.Message, Is.EqualTo("You cant afford this bet"));
     }
@@ -43,7 +43,7 @@ public class CoinFlipTest
         var Troels = new UserAccountDto { ID = userId, Saldo = 100, };
         _mockRepo.GetByIdAsync(userId).Returns(Troels);
 
-        var result = await _uut.PlayRound(userId, -5, CoinSide.plat);
+        var result = await _uut.PlayRound(userId, -5, CoinSide.Wise);
         Assert.That(result.Fail, Is.True);
         Assert.That(result.Message, Is.EqualTo("Amount is less or equal to zero"));
     }
@@ -53,7 +53,7 @@ public class CoinFlipTest
     {
         Guid userId = Guid.NewGuid();
         _mockRepo.GetByIdAsync(userId).Returns((UserAccountDto)null);
-        var result = await _uut.PlayRound(userId, 10, CoinSide.plat);
+        var result = await _uut.PlayRound(userId, 10, CoinSide.Wise);
         Assert.That(result.Fail, Is.True);
         Assert.That(result.Message, Is.EqualTo("User doesnt exist"));
     }
@@ -67,7 +67,7 @@ public class CoinFlipTest
         var Troels = new UserAccountDto { ID = userId, Saldo = 100, };
         _mockRepo.GetByIdAsync(userId).Returns(Troels);
 
-        var result = await _uut.PlayRound(userId, 50, CoinSide.plat);
+        var result = await _uut.PlayRound(userId, 50, CoinSide.Wise);
         Assert.That(result.Fail, Is.False);
         Assert.That(result.Message, Is.AnyOf("You Won", "You almost won try again quickly"));
         Assert.That(result.Winnings, Is.AnyOf(100,0));

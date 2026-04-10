@@ -1,13 +1,9 @@
 using WiseBet.backend.Controllers.DTOs;
 using WiseBet.backend.IRepository;
 using WiseBet.backend.DTOs;
+using WiseBet.backend.Data;
 namespace WiseBet.backend.Services;
 
-public enum CoinSide
-{
-    plat = 0,
-    krone = 1
-}
 public class CoinFlipService : ICoinflipService
 {
     private UserAccountRepository _userRepo;
@@ -17,11 +13,10 @@ public class CoinFlipService : ICoinflipService
         _userRepo = userRepo;
     }
 
-    public async Task<CoinFlipDTO> PlayRound(Guid userId, int Amount, CoinSide ChosenSide)
+    public async Task<CoinFlipDTO> PlayRound(Guid UserId, int Amount, CoinSide ChosenSide)
     {
-        var user = await _userRepo.GetByIdAsync(userId);
-
-        
+        var user = await _userRepo.GetByIdAsync(UserId);
+       
         if (user == null)
         {
             return new CoinFlipDTO
@@ -53,7 +48,7 @@ public class CoinFlipService : ICoinflipService
         bool IsWin = CoinResult == ChosenSide;
         int Winnings = IsWin? Amount:-Amount;
         user.Saldo += Winnings;
-        await _userRepo.PutAsync(userId, user);
+        await _userRepo.PutAsync(UserId, user);
 
             return new CoinFlipDTO
             {
@@ -63,15 +58,4 @@ public class CoinFlipService : ICoinflipService
             Message = IsWin? "You Won" : "You almost won try again quickly"
             };
     }
-    //does something when a user connects
-    // public override Task OnConnectedAsync()
-    // {
-    //     return base.OnConnectedAsync();
-    // }
-
-    //does something when user disconnects
-    // public override Task OnDisconnectedAsync(Exception? exception)
-    // {
-    //     return base.OnDisconnectedAsync(exception);
-    // }
 }

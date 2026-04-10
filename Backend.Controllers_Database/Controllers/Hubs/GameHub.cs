@@ -17,16 +17,18 @@ public class GameHub : Hub
         _coinflip = coinflip;
     }
 
-    public async Task PlayRound(Guid userId, int amount, CoinSide chosenSide)
+    public async Task PlayRound(Guid UserId, int Amount, CoinSide ChosenSide)
     {
-        var result = await _coinflip.PlayRound(userId, amount, chosenSide);
+        var result = await _coinflip.PlayRound(UserId, Amount, ChosenSide);
         
         if (result.Fail == true)
         {
             await Clients.Caller.SendAsync("ErrorMessageToClient", result.Message);
+            // this.Context.User.AddIdentity
             return;
         }
         await Clients.Caller.SendAsync("UpdateClient", result);
     }
+    
 
 }
