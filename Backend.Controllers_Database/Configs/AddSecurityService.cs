@@ -10,17 +10,6 @@ public static class SecurityServiceConfiguration
 {
     public static IServiceCollection AddCustomSecurityService(this IServiceCollection services)
     {
-
-        services.AddDbContext<SecurityDbContext>(options =>
-        {
-            DotNetEnv.Env.Load();
-            string? DbPath = Environment.GetEnvironmentVariable("DbConnnectionString");
-            if (string.IsNullOrEmpty(DbPath))
-                throw new NullReferenceException("[AddCustomSecurityService] DbConnection string was not found");
-            else
-                options.UseSqlServer(DbPath);
-        });
-
         services.AddAuthentication();
         services.AddAuthorization();
 
@@ -29,7 +18,7 @@ public static class SecurityServiceConfiguration
 
         services.AddIdentityApiEndpoints<AppUser>()
             // .AddRoles<IdentityRole>() // Skal indsættes senere
-            .AddEntityFrameworkStores<SecurityDbContext>();
+            .AddEntityFrameworkStores<DatabaseContext>();
 
         return services;
     }
@@ -38,17 +27,6 @@ public static class SecurityServiceConfiguration
     {
         app.UseAuthentication();
         app.UseAuthorization();
-
-        using (var scope = app.Services.CreateScope())
-        {
-            var services = scope.ServiceProvider;
-            var DbSec = services.GetService<SecurityDbContext>();
-            if (DbSec != null)
-            {
-                Console.WriteLine("[AddSecurityService] SecurityDbContext was migrated");
-                DbSec.Database.Migrate();
-            }
-        }
 
         return app;
     }
