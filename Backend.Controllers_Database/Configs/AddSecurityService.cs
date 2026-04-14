@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Identity;
 using WiseBet.backend.Security.Models;
 using WiseBet.backend.Security;
 using Microsoft.EntityFrameworkCore;
+using WiseBet.backend.Data;
+using WiseBet.backend.IRepository;
 namespace WiseBet.backend.Configs;
 
 public static class SecurityServiceConfiguration
@@ -23,6 +25,7 @@ public static class SecurityServiceConfiguration
         services.AddAuthorization();
 
         services.AddScoped<SecurityService>();
+        services.AddScoped<UserAccountRepository>();
 
         services.AddIdentityApiEndpoints<AppUser>()
             // .AddRoles<IdentityRole>() // Skal indsættes senere

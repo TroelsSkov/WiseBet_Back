@@ -7,19 +7,18 @@ using WiseBet.backend.Data;
 using WiseBet.backend.DTOs;
 using WiseBet.backend.IRepository;
 using WiseBet.backend.Security.Models;
+using System.Security.Claims;
 
 namespace WiseBet.backend.Security;
 
 public class SecurityService
 {
-    private readonly SecurityDbContext _context;
     private readonly UserAccountRepository _userRepo;
     private readonly SignInManager<AppUser> _signInManager;
     private readonly UserManager<AppUser> _userMananager;
-    public SecurityService(SecurityDbContext context, DatabaseContext c, SignInManager<AppUser> signInMan, UserManager<AppUser> userMan)
+    public SecurityService( UserAccountRepository userRepo, SignInManager<AppUser> signInMan, UserManager<AppUser> userMan)
     {
-        _context = context;
-        _userRepo = new(c);
+        _userRepo = userRepo;
         _signInManager = signInMan;
         _userMananager = userMan;
     }
