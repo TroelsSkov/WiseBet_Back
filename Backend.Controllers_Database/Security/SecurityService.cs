@@ -65,7 +65,17 @@ public class SecurityService
 
     public async Task<bool> ValidateLoginRequest(AuthLoginDto login)
     {
+        var result = await _signInManager.PasswordSignInAsync(
+            login.UserName,
+            login.Password,
+            isPersistent: false,
+            lockoutOnFailure: false
+        );
 
+        if (!result.Succeeded)
+        {
+            return false;
+        }
 
         return true;
     }
