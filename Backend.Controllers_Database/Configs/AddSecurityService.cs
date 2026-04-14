@@ -39,6 +39,17 @@ public static class SecurityServiceConfiguration
         app.UseAuthentication();
         app.UseAuthorization();
 
+        using (var scope = app.Services.CreateScope())
+        {
+            var services = scope.ServiceProvider;
+            var DbSec = services.GetService<SecurityDbContext>();
+            if (DbSec != null)
+            {
+                Console.WriteLine("[AddSecurityService] SecurityDbContext was migrated");
+                DbSec.Database.Migrate();
+            }
+        }
+
         return app;
     }
 }
