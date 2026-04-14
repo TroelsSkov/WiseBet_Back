@@ -25,7 +25,7 @@ public static class SecurityServiceConfiguration
         services.AddScoped<SecurityService>();
 
         services.AddIdentityApiEndpoints<AppUser>()
-            .AddRoles<IdentityRole>()
+            // .AddRoles<IdentityRole>() // Skal indsættes senere
             .AddEntityFrameworkStores<SecurityDbContext>();
 
         return services;
