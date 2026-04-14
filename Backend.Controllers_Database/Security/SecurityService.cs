@@ -1,3 +1,5 @@
+using System.Linq.Expressions;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using WiseBet.backend.Controllers.DTOs;
@@ -56,8 +58,8 @@ public class SecurityService
             catch (System.Exception e)
             {
                 Console.WriteLine($"[SecurityService] Was not able to clean up user: {e.Message}");
-                return false;
             }
+            return false;
         }
 
         return true;
@@ -76,6 +78,19 @@ public class SecurityService
         {
             return false;
         }
+
+        var user = await _userMananager.FindByNameAsync(login.UserName);
+
+        if (user == null)
+        {
+            Console.WriteLine("[SecurityService] Unable to find user");
+            return false;
+        }
+
+        await _signInManager.SignInWithClaimsAsync(
+            user,
+            false,
+            new List<Claim> { new Claim("UserRepoConnect", user.UserRepoConnect.ToString()) });
 
         return true;
     }
