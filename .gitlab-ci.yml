@@ -1,6 +1,13 @@
 # See https://docs.gitlab.com/ee/ci/testing/unit_test_report_examples.html
 # Complete reference here: https://docs.gitlab.com/ee/ci/yaml/index.html
+
+# In-order what needs to be done in the pipeline
+stages:
+  - test
+  # - deploy
+
 image: mcr.microsoft.com/dotnet/sdk:10.0
+
 build-and-test:
   stage: test
   variables:
@@ -31,3 +38,24 @@ build-and-test:
       coverage_report:
         coverage_format: cobertura
         path: ./**/coverage.cobertura.xml
+
+# build_image_and_deploy:
+#   stage: deploy
+#   image: docker:24.0.5  # Vi bruger en Docker-image i stedet for .NET SDK
+#   services:
+#     - docker:24.0.5-dind # Gør det muligt at køre Docker-kommandoer
+#   variables:
+#     DOCKER_TLS_CERTDIR: "/certs"
+#     IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+#   script:
+#     # 1. Login til GitLabs indbyggede registry
+#     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    
+#     # 2. Build dit image ud fra din Dockerfile
+#     - docker build -t $IMAGE_TAG .
+    
+#     # 3. Push det til registry
+#     - docker push $IMAGE_TAG
+#   rules:
+#     # Denne regel sikrer, at det KUN kører på 'testing' branchen
+#     - if: $CI_COMMIT_BRANCH == "testing"
