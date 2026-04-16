@@ -1,0 +1,29 @@
+  # Create a .env file in root and set SA_PASSWORD=<password> for it to function
+  services:
+  api:
+    image: wisebet_backend:latest
+    ports:
+      - "8080:8080"
+    depends_on:
+      sql_server:
+        condition: service_healthy
+    environment:
+      - DbConnnectionString=Server=sql_server,1433;Database=WiseBet;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True;
+
+  sql_server:
+    image: mcr.microsoft.com/mssql/server:2025-latest
+    ports:
+      - "1433:1433"
+    container_name: mssql2025
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=${SA_PASSWORD}
+      - MSSQL_PID=Evaluation
+    healthcheck:
+    # En del af det her er cooked med Ai. Det handler om at de korrekte tools skal anvendes. Testen forløbet opstarten af services-api
+    # Vi kunne køre en anden kommando også, såsom netstat, men nu åbner vi terminalen på sql serveren køre en kommando og hvis det
+    # lykkedes så kan vi starte services-api
+      test: [ "CMD-SHELL", "/opt/mssql-tools**18**/bin/sqlcmd -S localhost -U sa -P ${SA_PASSWORD} -Q 'SELECT 1' -C || exit 1" ]
+      interval: 10s
+      retries: 5
+      start_period: 10s
