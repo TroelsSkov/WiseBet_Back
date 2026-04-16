@@ -1,7 +1,10 @@
   # Create a .env file in root and set SA_PASSWORD=<password> for it to function
-  services:
+services:
   api:
-    image: wisebet_backend:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: wisebet-backend-api:latest
     ports:
       - "8080:8080"
     depends_on:
