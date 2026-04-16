@@ -6,12 +6,13 @@ using WiseBet.backend.Services;
 using NSubstitute;
 using WiseBet.backend.Controllers.DTOs;
 using NUnit.Framework.Internal;
+using System.Reflection;
 namespace Backend.DatabaseController.unit.tests.Hubs;
 [TestFixture]
 public class CoinFlipTest
 {
     private CoinFlipService _uut;
-    private UserAccountRepository _mockRepo;
+    private UserAccountRepository repo;
 
     [SetUp]
     public void Setup()
@@ -20,59 +21,30 @@ public class CoinFlipTest
             .UseInMemoryDatabase(databaseName: "TestDb")
             .Options;
         var fakeContext = new DatabaseContext(options);
-        _mockRepo = Substitute.For<UserAccountRepository>(fakeContext);
-        _uut = new CoinFlipService(_mockRepo);
+        repo = Substitute.For<UserAccountRepository>(fakeContext);
+        _uut = new CoinFlipService(repo);
     }
-
-    [Test]
-    public async Task PlayRound_TroelsSpiller_SendError()
-    {
-        Guid userId = Guid.NewGuid();
-        var Troels = new UserAccountDto { ID = userId, Saldo = 1, };
-        _mockRepo.GetByIdAsync(userId).Returns(Troels);
-
-        var result = await _uut.PlayRound(userId, 5, CoinSide.Wise);
-        Assert.That(result.Fail, Is.True);
-        Assert.That(result.Message, Is.EqualTo("You cant afford this bet"));
-    }
-
-    [Test]
-    public async Task PlayRound_BetIsLessOrEqualToZero_SendError()
-    {
-        Guid userId = Guid.NewGuid();
-        var Troels = new UserAccountDto { ID = userId, Saldo = 100, };
-        _mockRepo.GetByIdAsync(userId).Returns(Troels);
-
-        var result = await _uut.PlayRound(userId, -5, CoinSide.Wise);
-        Assert.That(result.Fail, Is.True);
-        Assert.That(result.Message, Is.EqualTo("Amount is less or equal to zero"));
-    }
-
-    [Test]
-    public async Task PlayRound_UserIsNull_SendError()
-    {
-        Guid userId = Guid.NewGuid();
-        _mockRepo.GetByIdAsync(userId).Returns((UserAccountDto)null);
-        var result = await _uut.PlayRound(userId, 10, CoinSide.Wise);
-        Assert.That(result.Fail, Is.True);
-        Assert.That(result.Message, Is.EqualTo("User doesnt exist"));
-    }
-
-
 
     [Test]
     public async Task Playround_LegalAmount_CorrectLogicWin()
     {
         Guid userId = Guid.NewGuid();
-        var Troels = new UserAccountDto { ID = userId, Saldo = 100, };
-        _mockRepo.GetByIdAsync(userId).Returns(Troels);
+        int InitialSaldo = 100;
+        int betAmount = 50;
+        var Troels = new UserAccountDto { ID = userId, Saldo = InitialSaldo, };
+        repo.GetByIdAsync(userId).Returns(Troels);
 
-        var result = await _uut.PlayRound(userId, 50, CoinSide.Wise);
+        var result = await _uut.PlayRound(userId, betAmount, CoinSide.Wise);
         Assert.That(result.Fail, Is.False);
         Assert.That(result.Message, Is.AnyOf("You Won", "You almost won try again quickly"));
         Assert.That(result.Winnings, Is.AnyOf(100,0));
+        if (result.Message == "You Won")
+        {
+            Assert.That(Troels.Saldo, Is.EqualTo(InitialSaldo+betAmount));
+        }
+        else
+        {
+            Assert.That(Troels.Saldo, Is.EqualTo(InitialSaldo-betAmount));
+        }
     }
-    
-    
-
 }

@@ -7,6 +7,7 @@ using Scalar.AspNetCore;
 using WiseBet.backend.Hubs;
 using WiseBet.backend.Services;
 using Microsoft.Extensions.Options;
+using WiseBet.backend.IRepository;
 
 var builder = WebApplication.CreateBuilder(args);
 var FrontEndUrl = builder.Configuration.GetValue<string>("FrontendSettings:baseUrl");
@@ -19,13 +20,13 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSignalR();
-builder.Services.AddScoped<ICoinflipService, CoinFlipService>();
+builder.Services.AddScoped<ICoinflipService, CoinFlipService>().AddScoped<UserAccountRepository>();
 
 builder.Services.AddCors(Options =>
 {
     Options.AddPolicy("FrontEndPolicy", policy =>
     {
-        policy.WithOrigins(FrontEndUrl)
+        policy.SetIsOriginAllowed(origin => true)
         .AllowAnyHeader()
         .AllowAnyMethod()
         .AllowCredentials();
@@ -47,5 +48,3 @@ using (var scope = app.Services.CreateScope())
 }
 app.MapHub<GameHub>("/GameHub");
 app.Run();
-
-
