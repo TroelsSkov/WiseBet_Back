@@ -39,14 +39,12 @@ public class TestPaymentsRepository
         {
             ID = Guid.NewGuid(),
             Username = "TestUser1",
-            Password = "pass",
             Saldo = 100
         };
         u2 = new UserAccountDto
         {
             ID = Guid.NewGuid(),
             Username = "TestUser2",
-            Password = "pass",
             Saldo = 200
         };
 

@@ -24,7 +24,6 @@ public class SecurityService
         {
             ID = Guid.NewGuid(),
             Username = reg.UserName,
-            Password = reg.Password,
             Saldo = 10000 // start saldo?
         };
 

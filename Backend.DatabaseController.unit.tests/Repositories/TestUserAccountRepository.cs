@@ -45,7 +45,6 @@ public class TestUserAccountRepository
         {
             ID = Guid.NewGuid(),
             Username = "Test1",
-            Password = "Test1_Password",
             Saldo = 0
         };
 
@@ -69,7 +68,6 @@ public class TestUserAccountRepository
         {
             ID = Guid.NewGuid(),
             Username = "Test1",
-            Password = "Test1_Password",
             Saldo = 0
         };
 
@@ -77,7 +75,6 @@ public class TestUserAccountRepository
         {
             ID = Guid.NewGuid(),
             Username = "Test2",
-            Password = "Test2_Passwrod",
             Saldo = 100
         };
 
@@ -95,7 +92,6 @@ public class TestUserAccountRepository
         {
             ID = Guid.NewGuid(),
             Username = "Test1",
-            Password = "Test1_Password",
             Saldo = 0
         };
 
@@ -113,7 +109,6 @@ public class TestUserAccountRepository
         {
             ID = Guid.NewGuid(),
             Username = "Test1",
-            Password = "Test1_Password",
             Saldo = 0
         };
 
@@ -129,7 +124,6 @@ public class TestUserAccountRepository
         {
             ID = Guid.NewGuid(),
             Username = "Test1",
-            Password = "Test1_Password",
             Saldo = 0
         };
 
@@ -140,7 +134,6 @@ public class TestUserAccountRepository
         Assert.That(user.ID, Is.EqualTo(u1.ID));
 
         u1.Username = "Test1_changed";
-        u1.Password = "Test1_Password_changed";
         u1.Saldo = 123;
 
         await m_uut.PutAsync(u1.ID, u1);
@@ -150,7 +143,6 @@ public class TestUserAccountRepository
         Assert.That(updatedUser, Is.Not.Null);
         Assert.That(updatedUser.ID, Is.EqualTo(u1.ID));
         Assert.That(updatedUser.Username, Is.EqualTo(u1.Username));
-        Assert.That(updatedUser.Password, Is.EqualTo(u1.Password));
         Assert.That(updatedUser.Saldo, Is.EqualTo(u1.Saldo));
     }
 
@@ -161,7 +153,6 @@ public class TestUserAccountRepository
         {
             ID = Guid.NewGuid(),
             Username = "Test1",
-            Password = "Test1_Password",
             Saldo = 0
         };
 
@@ -172,7 +163,6 @@ public class TestUserAccountRepository
         Assert.That(user.ID, Is.EqualTo(u1.ID));
 
         u1.Username = "Test1_changed";
-        u1.Password = "Test1_Password_changed";
         u1.Saldo = 123;
 
         Assert.ThrowsAsync<WiseBet.backend.IRepository.KeyNotFoundException>(async () => await m_uut.PutAsync(Guid.NewGuid(), u1));
@@ -185,7 +175,6 @@ public class TestUserAccountRepository
         {
             ID = Guid.NewGuid(),
             Username = "Test1",
-            Password = "Test1_Password",
             Saldo = 0
         };
 
