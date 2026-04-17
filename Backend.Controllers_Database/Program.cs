@@ -1,8 +1,5 @@
-using WiseBet.backend.Controllers;
-using WiseBet.backend.Models;
 using WiseBet.backend.Data;
-using Microsoft.EntityFrameworkCore.SqlServer;
-using Microsoft.EntityFrameworkCore;
+using WiseBet.backend.Configs;
 using Scalar.AspNetCore;
 using WiseBet.backend.Hubs;
 using WiseBet.backend.Services;
@@ -16,6 +13,8 @@ builder.Services.AddDbContext<DatabaseContext>(); // Configurationen sker i Data
 builder.Services.AddControllers();
 
 // I din Program.cs
+
+builder.Services.AddCustomSecurityService();
 
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
@@ -46,5 +45,8 @@ using (var scope = app.Services.CreateScope())
     var seed = new DataSeed(context);
     seed.Seed();
 }
+
+app.AddCustomSecurityWebapplication();
+
 app.MapHub<GameHub>("/GameHub");
 app.Run();
