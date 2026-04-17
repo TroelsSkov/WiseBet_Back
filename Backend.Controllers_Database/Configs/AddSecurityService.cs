@@ -4,6 +4,7 @@ using WiseBet.backend.Security;
 using Microsoft.EntityFrameworkCore;
 using WiseBet.backend.Data;
 using WiseBet.backend.IRepository;
+using System.Diagnostics.Tracing;
 namespace WiseBet.backend.Configs;
 
 public static class SecurityServiceConfiguration
@@ -20,7 +21,7 @@ public static class SecurityServiceConfiguration
             // .AddRoles<IdentityRole>() // Skal indsættes senere
             .AddEntityFrameworkStores<DatabaseContext>();
 
-        return services;
+            return services;
     }
 
     public static WebApplication AddCustomSecurityWebapplication(this WebApplication app)

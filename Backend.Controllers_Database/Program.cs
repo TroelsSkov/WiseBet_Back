@@ -49,6 +49,5 @@ using (var scope = app.Services.CreateScope())
     seed.Seed();
 }
 
-
 app.MapHub<GameHub>("/GameHub");
 app.Run();
