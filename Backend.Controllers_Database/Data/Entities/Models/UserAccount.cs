@@ -11,7 +11,6 @@ namespace WiseBet.backend.Models
         [Key]
         public Guid UserID { get; set; } = Guid.NewGuid();
         public string Username { get; set; }
-        public string Password { get; set; }
         public int Saldo { get; set; }
 
         public ICollection<BetHistory> BetHistories { get; set; }
