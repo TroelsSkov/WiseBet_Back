@@ -1,10 +1,12 @@
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using WiseBet.backend.Models;
+using WiseBet.backend.Security.Models;
 namespace WiseBet.backend.Data
 {
 
     [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
-    public class DatabaseContext : DbContext
+    public class DatabaseContext : IdentityDbContext<AppUser>
     {
         public DbSet<Chat> Chats { get; set; }
         public DbSet<UserAccount> UserAccounts { get; set; }
