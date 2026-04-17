@@ -13,7 +13,7 @@ namespace WiseBet.backend.IRepository
         {
             var Users = await context.UserAccounts.ToListAsync();
             List<UserAccountDto> UserDtos = new();
-
+            
             foreach (var user in Users)
             {
                 UserDtos.Add(new UserAccountDto
@@ -24,7 +24,6 @@ namespace WiseBet.backend.IRepository
                     Saldo = user.Saldo
                 });
             }
-
             return UserDtos;
         }
         public override async Task<UserAccountDto> GetByIdAsync(Guid id)
