@@ -6,11 +6,12 @@ services:
       dockerfile: Dockerfile
     image: wisebet-backend-api:latest
     ports:
-      - "8080:8080"
+      - "5277:5277"
     depends_on:
       sql_server:
         condition: service_healthy
     environment:
+      - ASPNETCORE_URLS=http://+:5277
       - DbConnnectionString=Server=sql_server,1433;Database=WiseBet;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True;
 
   sql_server:
