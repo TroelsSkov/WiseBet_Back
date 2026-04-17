@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/Backend.Controllers_Database/">
+    <Project Path="Backend.Controllers_Database/WiseBet.backend.csproj" />
+  </Folder>
+  <Project Path="Backend.DatabaseController.unit.tests/Backend.DatabaseController.unit.tests.csproj" />
+</Solution>
