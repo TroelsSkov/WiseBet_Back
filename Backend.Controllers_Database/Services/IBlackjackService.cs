@@ -6,7 +6,7 @@ namespace WiseBet.backend.Services;
 
 public interface IBlackjackService
 {
-    Task<GameState> StartRound(Guid id, int bet);
-    Task<GameState> Hit(Guid id);
-    Task<GameState> Stand(Guid id);
+    Task<BlackjackDto> StartRound(Guid id, int bet);
+    Task<BlackjackDto> Hit(Guid id);
+    Task<BlackjackDto> Stand(Guid id);
 }

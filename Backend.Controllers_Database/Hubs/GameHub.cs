@@ -13,10 +13,12 @@ public class GameHub : Hub
 {
     private ICoinflipService _coinflip;
     private IGeneralValidation _validate;
-    public GameHub(ICoinflipService coinflip, IGeneralValidation validation)
+    private IBlackjackService _blackjack;
+    public GameHub(ICoinflipService coinflip, IGeneralValidation validation, IBlackjackService blackjack)
     {
         _coinflip = coinflip;
         _validate = validation;
+        _blackjack = blackjack;
     }
 
     public async Task PlayRound(Guid UserId, int Amount, CoinSide ChosenSide)
@@ -34,5 +36,43 @@ public class GameHub : Hub
         var result = await _coinflip.PlayRound(UserId, Amount, ChosenSide);
 
         await Clients.Caller.SendAsync("UpdateClient", result);
+    }
+
+    public async Task StartRoundBlackjack(Guid UserId, int bet)
+    {
+        Console.WriteLine($"[GameHub] PLayer information:\n   UserID: {UserId}\n   Amount: {bet}\n");
+        var validate = await _validate.ValidateBet(UserId, bet);
+
+        if (validate.Fail == true)
+        {
+            await Clients.Caller.SendAsync("ErrorMessageToClient", validate.Message);
+            return;
+        }
+        var result = await _blackjack.StartRound(UserId, bet);
+        await Clients.Caller.SendAsync("UpdateClient", result);
+    }
+    public async Task HitBlackjack(Guid UserId)
+    {
+        try
+        {
+            var result = await _blackjack.Hit(UserId);
+            await Clients.Caller.SendAsync("UpdateClient", result);
+        }
+        catch (Exception e)
+        {
+            await Clients.Caller.SendAsync("ErrorMessageToClient", e.Message);
+        }
+    }
+    public async Task StandBlackjack(Guid UserId)
+    {
+        try
+        {
+            var result = await _blackjack.Stand(UserId);
+            await Clients.Caller.SendAsync("UpdateClient", result);
+        }
+        catch (Exception e)
+        {
+            await Clients.Caller.SendAsync("ErrorMessageToClient", e.Message);
+        }
     }
 }

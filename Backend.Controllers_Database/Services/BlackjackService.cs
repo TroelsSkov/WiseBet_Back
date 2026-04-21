@@ -2,8 +2,6 @@ using WiseBet.backend.Services.DTOs;
 using WiseBet.backend.Data;
 using WiseBet.backend.Services.Blackjack;
 using WiseBet.backend.IRepository;
-using Microsoft.EntityFrameworkCore.Diagnostics;
-
 
 namespace WiseBet.backend.Services;
 
@@ -11,20 +9,42 @@ public class BlackjackService : IBlackjackService
 {
     private Dictionary<Guid, GameState> _activeGames = new Dictionary<Guid, GameState>();
     private readonly UserAccountRepository _userRepo;
-    private int CalculateScore(List<Card> hand)
-    {
-        var result = 0;
-        foreach(Card card in hand)
-        {
-            result += card.Value;
-        }
-        return result;
-    }
 
     public BlackjackService(UserAccountRepository userRepo)
     {
         _userRepo = userRepo;
     }
+
+    private int CalculateScore(List<Card> hand)
+    {
+        var result = 0;
+        int aces = 0;
+        foreach (Card card in hand)
+        {
+            result += card.Value;
+            if (card.Rank == Rank.Ace)
+                aces++;
+        }
+        while (result > 21 && aces > 0)
+        {
+            result -= 10;
+            aces--;
+        }
+        return result;
+    }
+
+    private BlackjackDto BuildDto(GameState gameState)
+    {
+        return new BlackjackDto
+        {
+            PlayerHand = gameState.PlayerHand,
+            DealerVisibleHand = gameState.State == GameStatus.Playing
+                ? new List<Card> { gameState.DealerHand[0] }
+                : gameState.DealerHand,
+            Status = gameState.State
+        };
+    }
+
     public async Task<BlackjackDto> StartRound(Guid id, int bet)
     {
         var gameState = new GameState();
@@ -36,31 +56,58 @@ public class BlackjackService : IBlackjackService
         gameState.PlayerHand.Add(gameState.Deck.draw());
         gameState.DealerHand.Add(gameState.Deck.draw());
 
-        if(CalculateScore(gameState.DealerHand) == 21 && CalculateScore(gameState.PlayerHand) == 21)
-        {
+        if (CalculateScore(gameState.DealerHand) == 21 && CalculateScore(gameState.PlayerHand) == 21)
             gameState.State = GameStatus.Push;
-        }
-        else if(CalculateScore(gameState.PlayerHand) == 21)
-        {
+        else if (CalculateScore(gameState.PlayerHand) == 21)
             gameState.State = GameStatus.PlayerWin;
-        }
-        else if(CalculateScore(gameState.DealerHand) == 21)
-        {
+        else if (CalculateScore(gameState.DealerHand) == 21)
             gameState.State = GameStatus.DealerWin;
-        }
-        return new BlackjackDto
-        {
-            PlayerHand = gameState.PlayerHand,
-            DealerVisibleHand = new List<Card>{gameState.DealerHand[0]},
-            Status = gameState.State
-        };
+
+        if (gameState.State != GameStatus.Playing)
+            _activeGames.Remove(id);
+
+        return BuildDto(gameState);
     }
+
     public async Task<BlackjackDto> Hit(Guid id)
     {
-        return new BlackjackDto{};
+        var gameState = _activeGames[id];
+        gameState.PlayerHand.Add(gameState.Deck.draw());
+
+        if (CalculateScore(gameState.PlayerHand) > 21)
+        {
+            gameState.State = GameStatus.PlayerBust;
+            _activeGames.Remove(id);
+        }
+
+        return BuildDto(gameState);
     }
+
     public async Task<BlackjackDto> Stand(Guid id)
     {
-        return new BlackjackDto{};
+        var gameState = _activeGames[id];
+
+        while (CalculateScore(gameState.DealerHand) < 17)
+        {
+            gameState.DealerHand.Add(gameState.Deck.draw());
+            if (CalculateScore(gameState.DealerHand) > 21)
+            {
+                gameState.State = GameStatus.DealerBust;
+                break;
+            }
+        }
+
+        if (gameState.State != GameStatus.DealerBust)
+        {
+            if (CalculateScore(gameState.PlayerHand) > CalculateScore(gameState.DealerHand))
+                gameState.State = GameStatus.PlayerWin;
+            else if (CalculateScore(gameState.PlayerHand) < CalculateScore(gameState.DealerHand))
+                gameState.State = GameStatus.DealerWin;
+            else
+                gameState.State = GameStatus.Push;
+        }
+
+        _activeGames.Remove(id);
+        return BuildDto(gameState);
     }
 }
