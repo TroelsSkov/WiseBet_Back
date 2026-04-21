@@ -32,10 +32,15 @@ public class GameHub : Hub
             await Clients.Caller.SendAsync("ErrorMessageToClient", validate.Message);
             return;
         }
-
-        var result = await _coinflip.PlayRound(UserId, Amount, ChosenSide);
-
-        await Clients.Caller.SendAsync("UpdateClient", result);
+        try
+        {
+            var result = await _coinflip.PlayRound(UserId, Amount, ChosenSide);
+            await Clients.Caller.SendAsync("UpdateClient", result);
+        }
+        catch (Exception e)
+        {
+            await Clients.Caller.SendAsync("ErrorMessageToClient", e.Message);
+        }
     }
 
     public async Task StartRoundBlackjack(Guid UserId, int bet)
@@ -48,8 +53,15 @@ public class GameHub : Hub
             await Clients.Caller.SendAsync("ErrorMessageToClient", validate.Message);
             return;
         }
-        var result = await _blackjack.StartRound(UserId, bet);
-        await Clients.Caller.SendAsync("UpdateClient", result);
+        try
+        {
+            var result = await _blackjack.StartRound(UserId, bet);
+            await Clients.Caller.SendAsync("UpdateClient", result);
+        }
+        catch (Exception e)
+        {
+            await Clients.Caller.SendAsync("ErrorMessageToClient", e.Message);
+        }
     }
     public async Task HitBlackjack(Guid UserId)
     {

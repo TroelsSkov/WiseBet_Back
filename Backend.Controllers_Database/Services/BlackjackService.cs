@@ -47,6 +47,10 @@ public class BlackjackService : IBlackjackService
 
     public async Task<BlackjackDto> StartRound(Guid id, int bet)
     {
+        var user = await _userRepo.GetByIdAsync(id);
+        user.Saldo -= bet;
+        await _userRepo.PutAsync(id, user);
+
         var gameState = new GameState();
         _activeGames[id] = gameState;
         gameState.Bet = bet;
@@ -57,11 +61,20 @@ public class BlackjackService : IBlackjackService
         gameState.DealerHand.Add(gameState.Deck.draw());
 
         if (CalculateScore(gameState.DealerHand) == 21 && CalculateScore(gameState.PlayerHand) == 21)
+        {
             gameState.State = GameStatus.Push;
+            user.Saldo += bet;
+            await _userRepo.PutAsync(id, user);
+        }
         else if (CalculateScore(gameState.PlayerHand) == 21)
+        {
             gameState.State = GameStatus.PlayerWin;
+            user.Saldo += (int)(bet * 2.5);
+            await _userRepo.PutAsync(id, user);
+        }
         else if (CalculateScore(gameState.DealerHand) == 21)
             gameState.State = GameStatus.DealerWin;
+
 
         if (gameState.State != GameStatus.Playing)
             _activeGames.Remove(id);
@@ -85,6 +98,8 @@ public class BlackjackService : IBlackjackService
 
     public async Task<BlackjackDto> Stand(Guid id)
     {
+        var user = await _userRepo.GetByIdAsync(id);
+
         var gameState = _activeGames[id];
 
         while (CalculateScore(gameState.DealerHand) < 17)
@@ -93,6 +108,8 @@ public class BlackjackService : IBlackjackService
             if (CalculateScore(gameState.DealerHand) > 21)
             {
                 gameState.State = GameStatus.DealerBust;
+                user.Saldo += gameState.Bet * 2;
+                await _userRepo.PutAsync(id, user);
                 break;
             }
         }
@@ -100,11 +117,19 @@ public class BlackjackService : IBlackjackService
         if (gameState.State != GameStatus.DealerBust)
         {
             if (CalculateScore(gameState.PlayerHand) > CalculateScore(gameState.DealerHand))
+            {
                 gameState.State = GameStatus.PlayerWin;
+                user.Saldo += gameState.Bet * 2;
+                await _userRepo.PutAsync(id, user);
+            }
             else if (CalculateScore(gameState.PlayerHand) < CalculateScore(gameState.DealerHand))
                 gameState.State = GameStatus.DealerWin;
             else
+            {
                 gameState.State = GameStatus.Push;
+                user.Saldo += gameState.Bet;
+                await _userRepo.PutAsync(id, user);
+            }
         }
 
         _activeGames.Remove(id);
