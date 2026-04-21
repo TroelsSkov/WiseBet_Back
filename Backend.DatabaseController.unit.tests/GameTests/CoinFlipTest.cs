@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using WiseBet.backend.DTOs;
 using WiseBet.backend.Services;
 using NSubstitute;
-using WiseBet.backend.Controllers.DTOs;
+using WiseBet.backend.Services.DTOs;
 using NUnit.Framework.Internal;
 using System.Reflection;
 namespace Backend.DatabaseController.unit.tests.Hubs;
@@ -47,4 +47,4 @@ public class CoinFlipTest
             Assert.That(Troels.Saldo, Is.EqualTo(InitialSaldo-betAmount));
         }
     }
-}
+}  
