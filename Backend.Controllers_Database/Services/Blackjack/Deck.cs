@@ -1,8 +1,8 @@
 namespace WiseBet.backend.Services.Blackjack;
 
-public class Deck
+public class Deck : IDeck
 {
-    private List<Card> _cards;
+    private List<Card> _cards = new List<Card>();
 
     public Deck()
     {
@@ -13,10 +13,14 @@ public class Deck
                 _cards.Add(new Card(suit, rank));
             }
         }
+        Shuffle();
+    }
+
+    public void Shuffle()
+    {
         Random random = new Random();
         _cards = _cards.OrderBy(card => random.Next()).ToList();
     }
-
     public Card draw()
     {
         Card TopCard = _cards[0];

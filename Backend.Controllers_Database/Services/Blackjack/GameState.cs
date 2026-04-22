@@ -4,7 +4,7 @@ public class GameState
 {
     public List<Card> PlayerHand {get; set;} = new List<Card>();
     public List<Card> DealerHand {get; set; } = new List<Card>();
-    public Deck Deck {get; set;}
+    public IDeck Deck {get; set;} = new Deck();
     public GameStatus State{get; set;}
     public int Bet{get; set;}
 

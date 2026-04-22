@@ -51,6 +51,7 @@ public class BlackjackService : IBlackjackService
         user.Saldo -= bet;
         await _userRepo.PutAsync(id, user);
 
+
         var gameState = new GameState();
         _activeGames[id] = gameState;
         gameState.Bet = bet;
