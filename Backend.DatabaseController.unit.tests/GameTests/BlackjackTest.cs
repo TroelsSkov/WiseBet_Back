@@ -19,7 +19,7 @@ public class BlackjackTest
     public void Setup()
     {
         var options = new DbContextOptionsBuilder<DatabaseContext>()
-            .UseInMemoryDatabase(databaseName: "BlackjackTestDb")
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
         var fakeContext = new DatabaseContext(options);
         _repo = Substitute.For<UserAccountRepository>(fakeContext);
@@ -217,11 +217,11 @@ public class BlackjackTest
 
         var result = await _uut.Stand(userId);
 
-        if (result.Status == GameStatus.PlayerWin)
+        if (result.Status == GameStatus.PlayerWin || result.Status == GameStatus.DealerBust)
             Assert.That(user.Saldo, Is.EqualTo(150));
         else if (result.Status == GameStatus.Push)
             Assert.That(user.Saldo, Is.EqualTo(100));
-        else
+        else 
             Assert.That(user.Saldo, Is.EqualTo(50));
     }
 }
