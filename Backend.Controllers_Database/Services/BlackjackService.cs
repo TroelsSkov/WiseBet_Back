@@ -73,9 +73,6 @@ public class BlackjackService : IBlackjackService
             user.Saldo += (int)(bet * 2.5);
             await _userRepo.PutAsync(id, user);
         }
-        else if (CalculateScore(gameState.DealerHand) == 21)
-            gameState.State = GameStatus.DealerWin;
-
 
         if (gameState.State != GameStatus.Playing)
             _activeGames.Remove(id);
@@ -132,6 +129,8 @@ public class BlackjackService : IBlackjackService
                 await _userRepo.PutAsync(id, user);
             }
         }
+        else if (CalculateScore(gameState.DealerHand) == 21)
+            gameState.State = GameStatus.DealerWin;
 
         _activeGames.Remove(id);
         return BuildDto(gameState);

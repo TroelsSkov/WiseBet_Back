@@ -20,6 +20,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSignalR();
 builder.Services.AddScoped<ICoinflipService, CoinFlipService>().AddScoped<UserAccountRepository>();
+builder.Services.AddSingleton<IBlackjackService, BlackjackService>().AddScoped<UserAccountRepository>();
 builder.Services.AddScoped<IGeneralValidation, GeneralValidation>();
 builder.Services.AddCors(Options =>
 {
