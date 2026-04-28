@@ -14,7 +14,10 @@ public class BlackjackService : IBlackjackService
     {
         _userRepo = userRepo;
     }
-
+    private int CalculateScore(Card card)
+    {
+        return card.Value;
+    }
     private int CalculateScore(List<Card> hand)
     {
         var result = 0;
@@ -41,7 +44,11 @@ public class BlackjackService : IBlackjackService
             DealerVisibleHand = gameState.State == GameStatus.Playing
                 ? new List<Card> { gameState.DealerHand[0] }
                 : gameState.DealerHand,
-            Status = gameState.State
+            Status = gameState.State,
+            PlayerScore = CalculateScore(gameState.PlayerHand),
+            DealerScore = gameState.State == GameStatus.Playing
+            ? CalculateScore(gameState.DealerHand[0])
+            : CalculateScore(gameState.DealerHand)
         };
     }
 
