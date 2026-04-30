@@ -1,6 +1,5 @@
 using WiseBet.backend.Data;
-using WiseBet.backend.Services;
-namespace WiseBet.backend.Controllers.DTOs;
+namespace WiseBet.backend.Services.DTOs;
 
 public class CoinFlipDTO
 {
