@@ -7,6 +7,7 @@ using WiseBet.backend.Data;
 using Microsoft.EntityFrameworkCore;
 using WiseBet.backend.DTOs;
 using WiseBet.backend.Services.Blackjack;
+using WiseBet.backend.Services.Roulette;
 using WiseBet.backend.Services.Coinflip;
 using WiseBet.backend.Services.Coinflip.Validation;
 using WiseBet.backend.Services.DTOs;
@@ -23,22 +24,35 @@ public class GameHubTest
     private GameHub _hub;
     private ICoinflipService _Icoinflip;
     private IBlackjackService _Iblackjack;
+    private IRouletteService _Iroulette;
+
     private IGeneralValidation _Ivalidation;
     private IHubCallerClients _Icaller;
     private ISingleClientProxy _Iproxy;
+    private ISingleClientProxy _IgroupProxy;
+    private IGroupManager _Igroups;
+    private HubCallerContext _context;
 
     [SetUp]
     public void Setup()
     {
         _Icoinflip = Substitute.For<ICoinflipService>();
         _Iblackjack = Substitute.For<IBlackjackService>();
+        _Iroulette = Substitute.For<IRouletteService>();
         _Ivalidation = Substitute.For<IGeneralValidation>();
         _Icaller = Substitute.For<IHubCallerClients>();
         _Iproxy = Substitute.For<ISingleClientProxy>();
+        _IgroupProxy = Substitute.For<ISingleClientProxy>();
+        _Igroups = Substitute.For<IGroupManager>();
+        _context = Substitute.For<HubCallerContext>();
+        _context.ConnectionId.Returns("test-connection-id");
         _Icaller.Caller.Returns(_Iproxy);
-        _hub = new GameHub(_Icoinflip, _Ivalidation, _Iblackjack)
+        _Icaller.Group(Arg.Any<string>()).Returns(_IgroupProxy);
+        _hub = new GameHub(_Icoinflip, _Ivalidation, _Iblackjack, _Iroulette)
         {
-            Clients = _Icaller
+            Clients = _Icaller,
+            Groups = _Igroups,
+            Context = _context
         };
     }
 
@@ -146,5 +160,45 @@ public class GameHubTest
 
         await _Iproxy.Received().SendCoreAsync("ErrorMessageToClient",
         Arg.Is<object[]>(o => o[0].ToString() == "Fejl"), default);
+    }
+
+    [Test]
+    public async Task JoinRouletteSession_ServiceCalled_AddsGroupAndBroadcasts()
+    {
+        var userId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
+        _Iroulette.JoinRouletteSession(userId).Returns(new RouletteDto { SessionId = sessionId });
+
+        await _hub.JoinRouletteSession(userId);
+
+        await _Iroulette.Received().JoinRouletteSession(userId);
+        await _Igroups.Received().AddToGroupAsync(Arg.Any<string>(), sessionId.ToString(), default);
+        await _IgroupProxy.Received().SendCoreAsync("RouletteUpdated", Arg.Any<object[]>(), default);
+    }
+
+    [Test]
+    public async Task PlaceRouletteBet_NullPayload_SendsErrorAndSkipsService()
+    {
+        var userId = Guid.NewGuid();
+
+        await _hub.PlaceRouletteBet(userId, null);
+
+        await _Iproxy.Received().SendCoreAsync("ErrorMessageToClient", Arg.Any<object[]>(), default);
+        await _Iroulette.DidNotReceive().PlaceRouletteBet(Arg.Any<Guid>(), Arg.Any<RouletteBetDto>());
+    }
+
+    [Test]
+    public async Task PlaceRouletteBet_ValidBet_CallsServiceAndBroadcasts()
+    {
+        var userId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
+        var bet = new RouletteBetDto { Amount = 10, BetType = RouletteBetType.Red };
+        _Ivalidation.ValidateBet(userId, 10).Returns(new CoinFlipDTO { Fail = false, Message = "ok" });
+        _Iroulette.PlaceRouletteBet(userId, bet).Returns(new RouletteDto { SessionId = sessionId });
+
+        await _hub.PlaceRouletteBet(userId, bet);
+
+        await _Iroulette.Received().PlaceRouletteBet(userId, bet);
+        await _IgroupProxy.Received().SendCoreAsync("RouletteUpdated", Arg.Any<object[]>(), default);
     }
 }
