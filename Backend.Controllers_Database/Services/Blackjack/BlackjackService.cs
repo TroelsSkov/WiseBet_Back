@@ -3,7 +3,7 @@ using WiseBet.backend.Data;
 using WiseBet.backend.Services.Blackjack;
 using WiseBet.backend.IRepository;
 
-namespace WiseBet.backend.Services;
+namespace WiseBet.backend.Services.Blackjack;
 
 public class BlackjackService : IBlackjackService
 {

@@ -2,7 +2,10 @@ using WiseBet.backend.Data;
 using WiseBet.backend.Configs;
 using Scalar.AspNetCore;
 using WiseBet.backend.Hubs;
-using WiseBet.backend.Services;
+using WiseBet.backend.Services.Blackjack;
+using WiseBet.backend.Services.Coinflip;
+using WiseBet.backend.Services.Coinflip.Validation;
+using WiseBet.backend.Services.Roulette;
 using Microsoft.Extensions.Options;
 using WiseBet.backend.IRepository;
 

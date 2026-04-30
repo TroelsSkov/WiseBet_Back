@@ -6,7 +6,10 @@ using Microsoft.AspNetCore.SignalR;
 using Sprache;
 using WiseBet.backend.Data;
 using Microsoft.VisualBasic;
-using WiseBet.backend.Services;
+using WiseBet.backend.Services.Blackjack;
+using WiseBet.backend.Services.Coinflip;
+using WiseBet.backend.Services.Coinflip.Validation;
+using WiseBet.backend.Services.Roulette;
 namespace WiseBet.backend.Hubs;
 
 public class GameHub : Hub
@@ -86,5 +89,19 @@ public class GameHub : Hub
         {
             await Clients.Caller.SendAsync("ErrorMessageToClient", e.Message);
         }
+    }
+
+    public async Task JoinRouletteSession(Guid UserId)
+    {
+        
+    }
+    public async Task LeaveRouletteSession(Guid UserId)
+    {
+        
+    }
+
+    public async Task PlaceRouletteBet(Guid UserId)
+    {
+        
     }
 }

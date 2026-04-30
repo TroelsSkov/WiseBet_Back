@@ -1,7 +1,7 @@
 using WiseBet.backend.Data;
 namespace WiseBet.backend.Services.DTOs;
 
-public class RouletteDTO
+public class RouletteDto
 {
     public Guid SessionId {get; set;}
     public RouletteSessionStatus Status{get; set;}

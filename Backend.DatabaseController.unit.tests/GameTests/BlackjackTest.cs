@@ -2,7 +2,7 @@ using WiseBet.backend.IRepository;
 using WiseBet.backend.Data;
 using Microsoft.EntityFrameworkCore;
 using WiseBet.backend.DTOs;
-using WiseBet.backend.Services;
+using WiseBet.backend.Services.Blackjack;
 using NSubstitute;
 using NUnit.Framework.Internal;
 using System.Reflection;
