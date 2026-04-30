@@ -3,9 +3,9 @@ using WiseBet.backend.Configs;
 using Scalar.AspNetCore;
 using WiseBet.backend.Hubs;
 using WiseBet.backend.Services.Blackjack;
+using WiseBet.backend.Services.Roulette;
 using WiseBet.backend.Services.Coinflip;
 using WiseBet.backend.Services.Coinflip.Validation;
-using WiseBet.backend.Services.Roulette;
 using Microsoft.Extensions.Options;
 using WiseBet.backend.IRepository;
 
@@ -19,12 +19,20 @@ builder.Services.AddControllers();
 
 builder.Services.AddCustomSecurityService();
 
+builder.Services.AddScoped<RoundRepository>();
+builder.Services.AddScoped<BetRepository>();
+builder.Services.AddScoped<UserAccountRepository>();
+builder.Services.AddSingleton<RouletteSessionStore>();
+
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSignalR();
-builder.Services.AddScoped<ICoinflipService, CoinFlipService>().AddScoped<UserAccountRepository>();
-builder.Services.AddSingleton<IBlackjackService, BlackjackService>().AddScoped<UserAccountRepository>();
+
+builder.Services.AddScoped<ICoinflipService, CoinFlipService>();
+builder.Services.AddScoped<IBlackjackService, BlackjackService>();
+builder.Services.AddScoped<IRouletteService, RouletteService>();
 builder.Services.AddScoped<IGeneralValidation, GeneralValidation>();
+
 builder.Services.AddCors(Options =>
 {
     Options.AddPolicy("FrontEndPolicy", policy =>
