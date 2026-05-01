@@ -13,6 +13,8 @@ using WiseBet.backend.Hubs;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Microsoft.Extensions.Configuration.UserSecrets;
+using System.Security.Claims;
+
 namespace Backend.DatabaseController.unit.tests.Hubs;
 
 [TestFixture]
@@ -24,19 +26,31 @@ public class GameHubTest
     private IGeneralValidation _Ivalidation;
     private IHubCallerClients _Icaller;
     private ISingleClientProxy _Iproxy;
+    private Guid _userID;
 
     [SetUp]
     public void Setup()
     {
+        _userID = Guid.NewGuid();
+
         _Icoinflip = Substitute.For<ICoinflipService>();
         _Iblackjack = Substitute.For<IBlackjackService>();
         _Ivalidation = Substitute.For<IGeneralValidation>();
         _Icaller = Substitute.For<IHubCallerClients>();
         _Iproxy = Substitute.For<ISingleClientProxy>();
         _Icaller.Caller.Returns(_Iproxy);
+
+        var claims = new List<Claim> { new Claim("UserRepoConnect", _userID.ToString()) };
+        var identity = new ClaimsIdentity(claims);
+        var claimsPrincipal = new ClaimsPrincipal(identity);
+
+        var mockContext = Substitute.For<HubCallerContext>();
+        mockContext.User.Returns(claimsPrincipal);
+
         _hub = new GameHub(_Icoinflip, _Ivalidation, _Iblackjack)
         {
-            Clients = _Icaller
+            Clients = _Icaller,
+            Context = mockContext
         };
     }
 
@@ -77,47 +91,43 @@ public class GameHubTest
     [Test]
     public async Task StartRoundBlackjack_ValidationFails_BetNotAccepted()
     {
-        Guid userID = Guid.NewGuid();
         var fail = new CoinFlipDTO { Fail = true, Message = "Mistake Found" };
-        _Ivalidation.ValidateBet(userID, 100).Returns(fail);
+        _Ivalidation.ValidateBet(_userID, 100).Returns(fail);
 
-        await _hub.StartRoundBlackjack(userID, 100);
+        await _hub.StartRoundBlackjack(100);
 
         await _Iproxy.Received().SendCoreAsync("ErrorMessageToClient",
         Arg.Is<object[]>(o => o[0].ToString() == "Mistake Found"), default);
-        await _Iblackjack.DidNotReceive().StartRound(userID, 100);
+        await _Iblackjack.DidNotReceive().StartRound(_userID, 100);
     }
 
     [Test]
     public async Task StartRoundBlackjack_ValidationAccepts_ServiceIsCalled()
     {
-        Guid userID = Guid.NewGuid();
-        _Ivalidation.ValidateBet(userID, 100).Returns(new CoinFlipDTO { Fail = false, Message = ""  });
-        _Iblackjack.StartRound(userID, 100).Returns(new BlackjackDto());
+        _Ivalidation.ValidateBet(_userID, 100).Returns(new CoinFlipDTO { Fail = false, Message = "" });
+        _Iblackjack.StartRound(_userID, 100).Returns(new BlackjackDto());
 
-        await _hub.StartRoundBlackjack(userID, 100);
+        await _hub.StartRoundBlackjack(100);
 
-        await _Iblackjack.Received().StartRound(userID, 100);
+        await _Iblackjack.Received().StartRound(_userID, 100);
     }
 
     [Test]
     public async Task HitBlackjack_ServiceIsCalled()
     {
-        Guid userID = Guid.NewGuid();
-        _Iblackjack.Hit(userID).Returns(new BlackjackDto());
+        _Iblackjack.Hit(_userID).Returns(new BlackjackDto());
 
-        await _hub.HitBlackjack(userID);
+        await _hub.HitBlackjack();
 
-        await _Iblackjack.Received().Hit(userID);
+        await _Iblackjack.Received().Hit(_userID);
     }
 
     [Test]
     public async Task HitBlackjack_ServiceThrows_ErrorSentToClient()
     {
-        Guid userID = Guid.NewGuid();
-        _Iblackjack.Hit(userID).Throws(new Exception("Fejl"));
+        _Iblackjack.Hit(_userID).Throws(new Exception("Fejl"));
 
-        await _hub.HitBlackjack(userID);
+        await _hub.HitBlackjack();
 
         await _Iproxy.Received().SendCoreAsync("ErrorMessageToClient",
         Arg.Is<object[]>(o => o[0].ToString() == "Fejl"), default);
@@ -126,21 +136,19 @@ public class GameHubTest
     [Test]
     public async Task StandBlackjack_ServiceIsCalled()
     {
-        Guid userID = Guid.NewGuid();
-        _Iblackjack.Stand(userID).Returns(new BlackjackDto());
+        _Iblackjack.Stand(_userID).Returns(new BlackjackDto());
 
-        await _hub.StandBlackjack(userID);
+        await _hub.StandBlackjack();
 
-        await _Iblackjack.Received().Stand(userID);
+        await _Iblackjack.Received().Stand(_userID);
     }
 
     [Test]
     public async Task StandBlackjack_ServiceThrows_ErrorSentToClient()
     {
-        Guid userID = Guid.NewGuid();
-        _Iblackjack.Stand(userID).Throws(new Exception("Fejl"));
+        _Iblackjack.Stand(_userID).Throws(new Exception("Fejl"));
 
-        await _hub.StandBlackjack(userID);
+        await _hub.StandBlackjack();
 
         await _Iproxy.Received().SendCoreAsync("ErrorMessageToClient",
         Arg.Is<object[]>(o => o[0].ToString() == "Fejl"), default);
