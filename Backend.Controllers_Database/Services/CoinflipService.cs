@@ -1,6 +1,5 @@
-using WiseBet.backend.Controllers.DTOs;
+using WiseBet.backend.Services.DTOs;
 using WiseBet.backend.IRepository;
-using WiseBet.backend.DTOs;
 using WiseBet.backend.Data;
 using WiseBet.backend.Models;
 namespace WiseBet.backend.Services;

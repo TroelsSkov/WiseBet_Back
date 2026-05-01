@@ -20,7 +20,8 @@ builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSignalR();
 builder.Services.AddScoped<ICoinflipService, CoinFlipService>().AddScoped<UserAccountRepository>();
-
+builder.Services.AddSingleton<IBlackjackService, BlackjackService>().AddScoped<UserAccountRepository>();
+builder.Services.AddScoped<IGeneralValidation, GeneralValidation>();
 builder.Services.AddCors(Options =>
 {
     Options.AddPolicy("FrontEndPolicy", policy =>
@@ -33,7 +34,10 @@ builder.Services.AddCors(Options =>
 });
 
 var app = builder.Build();
+
 app.UseCors("FrontEndPolicy");
+app.AddCustomSecurityWebapplication();
+
 app.MapOpenApi();
 app.MapScalarApiReference();
 app.MapControllers();
@@ -46,7 +50,6 @@ using (var scope = app.Services.CreateScope())
     seed.Seed();
 }
 
-app.AddCustomSecurityWebapplication();
 
 app.MapHub<GameHub>("/GameHub");
 app.Run();

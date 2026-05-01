@@ -43,7 +43,6 @@ public class TestBetRepository
         {
             ID = Guid.NewGuid(),
             Username = "TestUser1",
-            Password = "pass",
             Saldo = 100
         };
 
@@ -51,7 +50,6 @@ public class TestBetRepository
         {
             ID = Guid.NewGuid(),
             Username = "TestUser2",
-            Password = "pass",
             Saldo = 200
         };
 

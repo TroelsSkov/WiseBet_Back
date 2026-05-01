@@ -20,7 +20,6 @@ namespace WiseBet.backend.IRepository
                 {
                     ID = user.UserID,
                     Username = user.Username,
-                    Password = user.Password,
                     Saldo = user.Saldo
                 });
             }
@@ -37,7 +36,6 @@ namespace WiseBet.backend.IRepository
             {
                 ID = user.UserID,
                 Username = user.Username,
-                Password = user.Password,
                 Saldo = user.Saldo
             };
         }
@@ -47,7 +45,6 @@ namespace WiseBet.backend.IRepository
             {
                 UserID = dto.ID,
                 Username = dto.Username,
-                Password = dto.Password,
                 Saldo = dto.Saldo
             };
             
@@ -62,7 +59,6 @@ namespace WiseBet.backend.IRepository
                 throw new KeyNotFoundException(this);
 
             user.Username = dto.Username;
-            user.Password = dto.Password;
             user.Saldo = dto.Saldo;
 
             await context.SaveChangesAsync();
