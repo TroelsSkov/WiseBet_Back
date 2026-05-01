@@ -7,8 +7,10 @@ using Sprache;
 using WiseBet.backend.Data;
 using Microsoft.VisualBasic;
 using WiseBet.backend.Services;
+using Microsoft.AspNetCore.Authorization;
 namespace WiseBet.backend.Hubs;
 
+[Authorize]
 public class GameHub : Hub
 {
     private ICoinflipService _coinflip;
@@ -23,8 +25,9 @@ public class GameHub : Hub
 
         public async Task PlayRound(int Amount, CoinSide ChosenSide)
     {
-        var UserIdString = this.Context.User.FindFirst("ID")?.Value;
+        var UserIdString = this.Context.User?.FindFirst("UserRepoConnect")?.Value;
         Guid.TryParse(UserIdString, out Guid UserId);
+        Console.WriteLine($"[GameHub] PLayer information:\n   UserID: {UserIdString}\n   Amount: {Amount}\n   Chosenside: {ChosenSide}");
         Console.WriteLine($"[GameHub] PLayer information:\n   UserID: {UserId}\n   Amount: {Amount}\n   Chosenside: {ChosenSide}");
 
         var validate = await _validate.ValidateBet(UserId, Amount);

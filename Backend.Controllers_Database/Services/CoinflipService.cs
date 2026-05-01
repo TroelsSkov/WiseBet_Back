@@ -32,10 +32,10 @@ public class CoinFlipService : ICoinflipService
         int Winnings = IsWin ? Amount : -Amount;
         user.Saldo += Winnings;
 
-        var roundDto = new RoundDto{OutcomeId = IsWin? 0:1 , TotalAmount = Winnings, Payout = IsWin? Amount : -Amount,  };
-        var BetDto = new BetDto{RoundId = roundDto.ID, UserId = UserId, Amount = Amount, OutcomeDescription = IsWin? "Won":"Lost"};
-        await _roundRepo.PostAsync(roundDto);
-        await _betRepo.PostAsync(BetDto);
+        // var roundDto = new RoundDto{OutcomeId = IsWin? 0:1 , TotalAmount = Winnings, Payout = IsWin? Amount : -Amount,  };
+        // var BetDto = new BetDto{RoundId = roundDto.ID, UserId = UserId, Amount = Amount, OutcomeDescription = IsWin? "Won":"Lost"};
+        // await _roundRepo.PostAsync(roundDto);
+        // await _betRepo.PostAsync(BetDto);
         
         await _userRepo.PutAsync(UserId, user);
         var usertjek = await _userRepo.GetByIdAsync(UserId);
