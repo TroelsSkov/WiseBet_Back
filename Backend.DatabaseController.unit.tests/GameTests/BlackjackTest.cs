@@ -1,3 +1,4 @@
+using WiseBet.backend.Services.Blackjack;
 using WiseBet.backend.IRepository;
 using WiseBet.backend.Data;
 using Microsoft.EntityFrameworkCore;
@@ -14,6 +15,7 @@ public class BlackjackTest
 {
     private BlackjackService _uut;
     private UserAccountRepository _repo;
+    private IDeck _mockDeck;
 
     [SetUp]
     public void Setup()
@@ -23,10 +25,23 @@ public class BlackjackTest
             .Options;
         var fakeContext = new DatabaseContext(options);
         _repo = Substitute.For<UserAccountRepository>(fakeContext);
-        _uut = new BlackjackService(_repo);
+
+        _mockDeck = Substitute.For<IDeck>();
+        // Standard deck der returnerer tilfældige kort (eksisterende tests)
+        _mockDeck.draw().Returns(
+            new Card(Suit.Hearts, Rank.Five),
+            new Card(Suit.Spades, Rank.Seven),
+            new Card(Suit.Hearts, Rank.Eight),
+            new Card(Suit.Spades, Rank.Three),
+            new Card(Suit.Hearts, Rank.Two),
+            new Card(Suit.Spades, Rank.Four),
+            new Card(Suit.Hearts, Rank.Six),
+            new Card(Suit.Spades, Rank.Nine)
+        );
+
+        _uut = new BlackjackService(_repo, () => _mockDeck);
         _repo.PutAsync(Arg.Any<Guid>(), Arg.Any<UserAccountDto>()).Returns(Task.CompletedTask);
     }
-
     [Test]
     public async Task StartRound_ValidBet_SaldoDecreased()
     {
@@ -221,7 +236,31 @@ public class BlackjackTest
             Assert.That(user.Saldo, Is.EqualTo(150));
         else if (result.Status == GameStatus.Push)
             Assert.That(user.Saldo, Is.EqualTo(100));
-        else 
+        else
             Assert.That(user.Saldo, Is.EqualTo(50));
+    }
+    [Test]
+    public async Task DealerBlackjack_Wins_Against_Player21()
+    {
+        var userId = Guid.NewGuid();
+        var user = new UserAccountDto { ID = userId, Saldo = 100 };
+        _repo.GetByIdAsync(userId).Returns(user);
+
+        _mockDeck.draw().Returns(
+            new Card(Suit.Hearts, Rank.Five),   // Player kort 1
+            new Card(Suit.Hearts, Rank.Ace),    // Dealer kort 1
+            new Card(Suit.Hearts, Rank.Five),   // Player kort 2
+            new Card(Suit.Hearts, Rank.King),   // Dealer kort 2
+            new Card(Suit.Hearts, Rank.Ace)     // Player hit
+        );
+
+        var startResult = await _uut.StartRound(userId, 50);
+        var hitResult = await _uut.Hit(userId);
+
+        Assert.That(hitResult.PlayerScore, Is.EqualTo(21));
+        Assert.That(hitResult.Status, Is.EqualTo(GameStatus.Playing));
+
+        var standResult = await _uut.Stand(userId);
+        Assert.That(standResult.Status, Is.EqualTo(GameStatus.DealerWin));
     }
 }

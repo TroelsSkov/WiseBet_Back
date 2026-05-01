@@ -10,10 +10,12 @@ public class BlackjackService : IBlackjackService
 {
     private Dictionary<Guid, GameState> _activeGames = new Dictionary<Guid, GameState>();
     private readonly UserAccountRepository _userRepo;
+    private readonly Func<IDeck> _deckFactory;
 
-    public BlackjackService(UserAccountRepository userRepo)
+    public BlackjackService(UserAccountRepository userRepo, Func<IDeck> deckFactory)
     {
         _userRepo = userRepo;
+        _deckFactory = deckFactory;
     }
     private int CalculateScoreDealer(Card card)
     {
@@ -54,12 +56,12 @@ public class BlackjackService : IBlackjackService
     }
 
     public async Task<BlackjackDto> StartRound(Guid id, int bet)
-    {   
+    {
         var user = await _userRepo.GetByIdAsync(id);
         user.Saldo -= bet;
         await _userRepo.PutAsync(id, user);
 
-        var gameState = new GameState();
+        var gameState = new GameState(_deckFactory());
         _activeGames[id] = gameState;
         gameState.Bet = bet;
         gameState.State = GameStatus.Playing;
@@ -107,8 +109,12 @@ public class BlackjackService : IBlackjackService
 
         var gameState = _activeGames[id];
         if (CalculateScore(gameState.DealerHand) == 21)
-                gameState.State = GameStatus.DealerWin;
-            
+        {
+            gameState.State = GameStatus.DealerWin;
+            _activeGames.Remove(id);
+            return BuildDto(gameState);
+        }
+
 
         while (CalculateScore(gameState.DealerHand) < 17)
         {

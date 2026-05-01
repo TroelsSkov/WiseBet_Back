@@ -5,6 +5,7 @@ using WiseBet.backend.Hubs;
 using WiseBet.backend.Services;
 using Microsoft.Extensions.Options;
 using WiseBet.backend.IRepository;
+using WiseBet.backend.Services.Blackjack;
 
 var builder = WebApplication.CreateBuilder(args);
 var FrontEndUrl = builder.Configuration.GetValue<string>("FrontendSettings:baseUrl");
@@ -20,7 +21,11 @@ builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSignalR();
 builder.Services.AddScoped<ICoinflipService, CoinFlipService>().AddScoped<UserAccountRepository>();
-builder.Services.AddSingleton<IBlackjackService, BlackjackService>().AddScoped<UserAccountRepository>();
+builder.Services.AddSingleton<IBlackjackService>(sp =>
+    new BlackjackService(
+        sp.GetRequiredService<UserAccountRepository>(),
+        () => new Deck()
+    ));
 builder.Services.AddScoped<IGeneralValidation, GeneralValidation>();
 builder.Services.AddCors(Options =>
 {
