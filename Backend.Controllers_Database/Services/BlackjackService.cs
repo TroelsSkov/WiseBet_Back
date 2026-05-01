@@ -2,6 +2,7 @@ using WiseBet.backend.Services.DTOs;
 using WiseBet.backend.Data;
 using WiseBet.backend.Services.Blackjack;
 using WiseBet.backend.IRepository;
+using System.Security.Claims;
 
 namespace WiseBet.backend.Services;
 
@@ -53,11 +54,10 @@ public class BlackjackService : IBlackjackService
     }
 
     public async Task<BlackjackDto> StartRound(Guid id, int bet)
-    {
+    {   
         var user = await _userRepo.GetByIdAsync(id);
         user.Saldo -= bet;
         await _userRepo.PutAsync(id, user);
-
 
         var gameState = new GameState();
         _activeGames[id] = gameState;

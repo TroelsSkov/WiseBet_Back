@@ -43,10 +43,12 @@ public class GameHub : Hub
         }
     }
 
-    public async Task StartRoundBlackjack(Guid UserId, int bet)
+    public async Task StartRoundBlackjack(int bet)
     {
-        Console.WriteLine($"[GameHub] PLayer information:\n   UserID: {UserId}\n   Amount: {bet}\n");
-        var validate = await _validate.ValidateBet(UserId, bet);
+        var userClaim = this.Context.User.FindFirst("UserRepoConnect")?.Value;
+        Guid.TryParse(userClaim, out var userId);
+        Console.WriteLine($"[GameHub] PLayer information:\n   UserID: {userId}\n   Amount: {bet}\n");
+        var validate = await _validate.ValidateBet(userId, bet);
 
         if (validate.Fail == true)
         {
@@ -55,7 +57,7 @@ public class GameHub : Hub
         }
         try
         {
-            var result = await _blackjack.StartRound(UserId, bet);
+            var result = await _blackjack.StartRound(userId, bet);
             await Clients.Caller.SendAsync("UpdateClient", result);
         }
         catch (Exception e)
@@ -63,11 +65,13 @@ public class GameHub : Hub
             await Clients.Caller.SendAsync("ErrorMessageToClient", e.Message);
         }
     }
-    public async Task HitBlackjack(Guid UserId)
+    public async Task HitBlackjack()
     {
+        var userClaim = this.Context.User.FindFirst("UserRepoConnect")?.Value;
+        Guid.TryParse(userClaim, out var userId);
         try
         {
-            var result = await _blackjack.Hit(UserId);
+            var result = await _blackjack.Hit(userId);
             await Clients.Caller.SendAsync("UpdateClient", result);
         }
         catch (Exception e)
@@ -75,11 +79,13 @@ public class GameHub : Hub
             await Clients.Caller.SendAsync("ErrorMessageToClient", e.Message);
         }
     }
-    public async Task StandBlackjack(Guid UserId)
+    public async Task StandBlackjack()
     {
+        var userClaim = this.Context.User.FindFirst("UserRepoConnect")?.Value;
+        Guid.TryParse(userClaim, out var userId);
         try
         {
-            var result = await _blackjack.Stand(UserId);
+            var result = await _blackjack.Stand(userId);
             await Clients.Caller.SendAsync("UpdateClient", result);
         }
         catch (Exception e)
