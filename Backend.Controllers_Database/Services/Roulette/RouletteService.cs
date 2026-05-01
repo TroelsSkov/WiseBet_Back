@@ -2,6 +2,8 @@ using WiseBet.backend.Data;
 using WiseBet.backend.DTOs;
 using WiseBet.backend.IRepository;
 using WiseBet.backend.Services.DTOs;
+using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
 
 namespace WiseBet.backend.Services.Roulette;
 
@@ -10,7 +12,9 @@ public class RouletteService : IRouletteService
     private readonly UserAccountRepository _userRepo;
     private readonly RoundRepository _roundRepo;
     private readonly BetRepository _betRepo;
+    private readonly DatabaseContext _dbContext;
     private readonly RouletteSessionStore _sessionStore;
+    private readonly ILogger<RouletteService> _logger;
     private const int MaxUsersPerSession = 5;
     private static readonly HashSet<int> RedNumbers = new()
     {
@@ -21,92 +25,119 @@ public class RouletteService : IRouletteService
         UserAccountRepository userRepo,
         RoundRepository roundRepo,
         BetRepository betRepo,
-        RouletteSessionStore sessionStore)
+        DatabaseContext dbContext,
+        RouletteSessionStore sessionStore,
+        ILogger<RouletteService> logger)
     {
         _userRepo = userRepo;
         _roundRepo = roundRepo;
         _betRepo = betRepo;
+        _dbContext = dbContext;
         _sessionStore = sessionStore;
+        _logger = logger;
     }
 
-    public async Task<RouletteDto> JoinRouletteSession(Guid userId)
+    public async Task<IReadOnlyList<RouletteDto>> ProcessSessionTimersAsync()
+    {
+        var snapshots = _sessionStore.SnapshotSessions();
+        if (snapshots.Count == 0)
+            return Array.Empty<RouletteDto>();
+
+        var results = new List<RouletteDto>();
+        foreach (var session in snapshots)
+        {
+            try
+            {
+                var fromResolve = await ResolveRoundIfExpired(session);
+                results.AddRange(fromResolve);
+
+                int participantCount;
+                lock (session.SyncRoot)
+                {
+                    participantCount = session.Participants.Count;
+                }
+
+                if (participantCount == 0)
+                    continue;
+
+                results.Add(await BuildDtoAsync(session));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Roulette ProcessSessionTimers failed for session {SessionId}", session.SessionId);
+            }
+        }
+
+        return results;
+    }
+
+    public async Task<RouletteSessionUpdate> JoinRouletteSession(Guid userId)
     {
         var existing = _sessionStore.GetSessionForUser(userId);
         if (existing != null)
         {
-            await ResolveRoundIfExpired(existing);
-            return BuildDto(existing);
+            await EnsureCurrentRoundAsync(existing);
+            var broadcasts = await ResolveRoundIfExpired(existing);
+            return new RouletteSessionUpdate(broadcasts, await BuildDtoAsync(existing));
         }
 
-        var session = _sessionStore.GetSessionWithCapacity(MaxUsersPerSession);
-        if (session == null)
+        var session = _sessionStore.TryJoinExistingSession(userId, MaxUsersPerSession);
+        if (session != null)
         {
-            session = _sessionStore.CreateSession();
-            lock (session.SyncRoot)
-            {
-                session.Status = RouletteSessionStatus.BettingOpen;
-                session.RoundStartedUtc = DateTime.UtcNow;
-            }
+            await EnsureCurrentRoundAsync(session);
+            var broadcasts = await ResolveRoundIfExpired(session);
+            return new RouletteSessionUpdate(broadcasts, await BuildDtoAsync(session));
+        }
 
-            var roundDto = new RoundDto
-            {
-                ID = Guid.NewGuid(),
-                RoundPlayDate = DateTime.UtcNow,
-                OutcomeId = null,
-                OutcomeDescription = null,
-                TotalAmount = null,
-                Payout = null,
-                Earnings = null,
-                Bets = new List<Guid>()
-            };
+        session = _sessionStore.CreateNewSessionWithUser(userId);
+        lock (session.SyncRoot)
+        {
+            session.Status = RouletteSessionStatus.BettingOpen;
+            session.RoundStartedUtc = DateTime.UtcNow;
+        }
 
-            await _roundRepo.PostAsync(roundDto);
+        var roundDto = new RoundDto
+        {
+            ID = Guid.NewGuid(),
+            RoundPlayDate = DateTime.UtcNow,
+            OutcomeId = null,
+            OutcomeDescription = null,
+            TotalAmount = null,
+            Payout = null,
+            Earnings = null,
+            Bets = new List<Guid>()
+        };
+
+        await _roundRepo.PostAsync(roundDto);
+        lock (session.SyncRoot)
+        {
             session.CurrentRoundId = roundDto.ID;
         }
-        else
-        {
-            await ResolveRoundIfExpired(session);
 
-            // Hvis round blev reset i Resolve og der af en eller anden grund ikke findes ID
-            if (session.CurrentRoundId == null)
-            {
-                var roundDto = new RoundDto
-                {
-                    ID = Guid.NewGuid(),
-                    RoundPlayDate = DateTime.UtcNow,
-                    OutcomeId = null,
-                    OutcomeDescription = null,
-                    TotalAmount = null,
-                    Payout = null,
-                    Earnings = null,
-                    Bets = new List<Guid>()
-                };
-
-                await _roundRepo.PostAsync(roundDto);
-                session.CurrentRoundId = roundDto.ID;
-            }
-        }
-
-        _sessionStore.AddUserToSession(session, userId);
-        return BuildDto(session);
+        return new RouletteSessionUpdate(Array.Empty<RouletteDto>(), await BuildDtoAsync(session));
     }
 
-    public Task<RouletteDto> LeaveRouletteSession(Guid userId)
+    public async Task<RouletteSessionUpdate> LeaveRouletteSession(Guid userId)
     {
         var session = _sessionStore.GetSessionForUser(userId)
             ?? throw new System.Collections.Generic.KeyNotFoundException("User is not in any roulette session.");
+
+        if (_sessionStore.IsLastParticipant(session, userId))
+        {
+            await ResolveRoundOnLastLeaveIfNeeded(session);
+        }
 
         _sessionStore.RemoveUserFromSession(session, userId);
 
-        return Task.FromResult(BuildDto(session));
+        return new RouletteSessionUpdate(Array.Empty<RouletteDto>(), await BuildDtoAsync(session));
     }
 
-    public async Task<RouletteDto> PlaceRouletteBet(Guid userId, RouletteBetDto bet)
+    public async Task<RouletteSessionUpdate> PlaceRouletteBet(Guid userId, RouletteBetDto bet)
     {
         var session = _sessionStore.GetSessionForUser(userId)
             ?? throw new System.Collections.Generic.KeyNotFoundException("User is not in any roulette session.");
 
-        await ResolveRoundIfExpired(session);
+        var broadcasts = await ResolveRoundIfExpired(session);
 
         if (bet == null)
             throw new ArgumentNullException(nameof(bet));
@@ -130,39 +161,87 @@ public class RouletteService : IRouletteService
         if (user.Saldo < bet.Amount)
             throw new InvalidOperationException("You cant afford this bet");
 
-        // Træk saldo ved bet placement
-        user.Saldo -= bet.Amount;
-        await _userRepo.PutAsync(userId, user);
-
-        lock (session.SyncRoot)
-        {
-            session.Bets.Add((userId, bet));
-        }
-
-        // Persist bet (antager OutcomeID matcher RouletteBetType enum-værdier)
         var betDto = new BetDto
         {
             ID = Guid.NewGuid(),
             UserId = userId,
             RoundId = currentRoundId,
             Amount = bet.Amount,
-            OutcomeID = (int)bet.BetType,
+            OutcomeID = await GetOutcomeIdAsync(bet.BetType),
             OutcomeDescription = bet.BetType.ToString()
         };
 
-        await _betRepo.PostAsync(betDto);
+        if (string.Equals(_dbContext.Database.ProviderName, "Microsoft.EntityFrameworkCore.InMemory", StringComparison.Ordinal))
+        {
+            user.Saldo -= bet.Amount;
+            await _userRepo.PutAsync(userId, user);
+            await _betRepo.PostAsync(betDto);
+        }
+        else
+        {
+            await using var tx = await _dbContext.Database.BeginTransactionAsync();
+            try
+            {
+                user.Saldo -= bet.Amount;
+                await _userRepo.PutAsync(userId, user);
+                await _betRepo.PostAsync(betDto);
+                await tx.CommitAsync();
+            }
+            catch
+            {
+                await tx.RollbackAsync();
+                throw;
+            }
+        }
 
-        return BuildDto(session);
+        lock (session.SyncRoot)
+        {
+            session.Bets.Add((userId, bet));
+        }
+
+        return new RouletteSessionUpdate(broadcasts, await BuildDtoAsync(session));
     }
 
-    private async Task ResolveRoundIfExpired(RouletteSessionState session)
+    private async Task EnsureCurrentRoundAsync(RouletteSessionState session)
+    {
+        Guid? roundId;
+        lock (session.SyncRoot)
+        {
+            roundId = session.CurrentRoundId;
+        }
+
+        if (roundId != null)
+            return;
+
+        var roundDto = new RoundDto
+        {
+            ID = Guid.NewGuid(),
+            RoundPlayDate = DateTime.UtcNow,
+            OutcomeId = null,
+            OutcomeDescription = null,
+            TotalAmount = null,
+            Payout = null,
+            Earnings = null,
+            Bets = new List<Guid>()
+        };
+
+        await _roundRepo.PostAsync(roundDto);
+        lock (session.SyncRoot)
+        {
+            session.CurrentRoundId = roundDto.ID;
+        }
+    }
+
+    // Returnerer 0 eller 1 DTO: færdigspillet runde med vindertal (før nulstilling til ny runde).
+
+    private async Task<IReadOnlyList<RouletteDto>> ResolveRoundIfExpired(RouletteSessionState session)
     {
         Guid currentRoundId;
         lock (session.SyncRoot)
         {
             var elapsed = (DateTime.UtcNow - session.RoundStartedUtc).TotalSeconds;
             if (elapsed <= session.RoundDurationSeconds)
-                return;
+                return Array.Empty<RouletteDto>();
 
             if (session.CurrentRoundId == null)
                 throw new InvalidOperationException("Round not initialized.");
@@ -180,7 +259,6 @@ public class RouletteService : IRouletteService
             session.WinningColor = winningColor;
         }
 
-        // Hent persisted bets for denne round
         var roundBets = await _betRepo.GetAllBetsForRound(currentRoundId);
 
         var totalAmount = roundBets.Sum(b => b.Amount);
@@ -188,16 +266,14 @@ public class RouletteService : IRouletteService
 
         foreach (var bet in roundBets)
         {
-            // Antager OutcomeID matcher enum-værdierne:
-            // Green=0, Red=1, Black=2
-            var betType = (RouletteBetType)bet.OutcomeID;
+            var betType = await MapOutcomeIdToBetTypeAsync(bet.OutcomeID);
             var isWin = betType == winningColor;
 
             if (!isWin)
                 continue;
 
             var payout = betType == RouletteBetType.Green
-                ? bet.Amount * 14
+                ? bet.Amount * 34
                 : bet.Amount * 2;
 
             totalPayout += payout;
@@ -212,12 +288,11 @@ public class RouletteService : IRouletteService
             session.Status = RouletteSessionStatus.RoundFinished;
         }
 
-        // Opdater afsluttet round i DB
         var roundUpdate = new RoundDto
         {
             ID = currentRoundId,
             RoundPlayDate = DateTime.UtcNow,
-            OutcomeId = (int)winningColor,
+            OutcomeId = await GetOutcomeIdAsync(winningColor),
             OutcomeDescription = winningColor.ToString(),
             TotalAmount = totalAmount,
             Payout = totalPayout,
@@ -227,7 +302,8 @@ public class RouletteService : IRouletteService
 
         await _roundRepo.PutAsync(roundUpdate.ID, roundUpdate);
 
-        // Start ny round
+        var finishedRoundDto = await BuildDtoAsync(session);
+
         lock (session.SyncRoot)
         {
             session.Bets.Clear();
@@ -254,6 +330,8 @@ public class RouletteService : IRouletteService
         {
             session.CurrentRoundId = nextRound.ID;
         }
+
+        return new[] { finishedRoundDto };
     }
 
     private static RouletteBetType MapNumberToColor(int n)
@@ -262,24 +340,130 @@ public class RouletteService : IRouletteService
         return RedNumbers.Contains(n) ? RouletteBetType.Red : RouletteBetType.Black;
     }
 
-    private static RouletteDto BuildDto(RouletteSessionState s)
+    private async Task ResolveRoundOnLastLeaveIfNeeded(RouletteSessionState session)
     {
+        Guid? roundId;
+        lock (session.SyncRoot)
+        {
+            roundId = session.CurrentRoundId;
+        }
+
+        if (roundId == null)
+            return;
+
+        var round = await _roundRepo.GetByIdAsync(roundId.Value);
+        if (round.OutcomeId != null)
+            return;
+
+        var hasPersistedBets = (await _betRepo.GetAllBetsForRound(roundId.Value)).Count > 0;
+        if (!hasPersistedBets)
+            return;
+
+        lock (session.SyncRoot)
+        {
+            session.RoundStartedUtc = DateTime.UtcNow.AddSeconds(-session.RoundDurationSeconds - 1);
+        }
+
+        await ResolveRoundIfExpired(session);
+    }
+
+    private async Task<int> GetOutcomeIdAsync(RouletteBetType betType)
+    {
+        var descriptions = betType switch
+        {
+            RouletteBetType.Red => new[] { "Rød", "Rod", "Red" },
+            RouletteBetType.Black => new[] { "Sort", "Black" },
+            RouletteBetType.Green => new[] { "Grøn", "Gron", "Green" },
+            _ => throw new ArgumentOutOfRangeException(nameof(betType), betType, "Unknown roulette bet type.")
+        };
+
+        var id = await _dbContext.Outcomes
+            .Where(o => descriptions.Contains(o.OutcomeDescription))
+            .Select(o => (int?)o.OutcomeId)
+            .FirstOrDefaultAsync();
+
+        if (id == null)
+            throw new InvalidOperationException($"Outcome for {betType} not configured in database.");
+
+        return id.Value;
+    }
+
+    private async Task<RouletteBetType> MapOutcomeIdToBetTypeAsync(int outcomeId)
+    {
+        var description = await _dbContext.Outcomes
+            .Where(o => o.OutcomeId == outcomeId)
+            .Select(o => o.OutcomeDescription)
+            .FirstOrDefaultAsync();
+
+        if (description == null)
+            throw new ArgumentOutOfRangeException(nameof(outcomeId), outcomeId, "Unknown roulette outcome id.");
+
+        return description switch
+        {
+            "Rød" or "Rod" or "Red" => RouletteBetType.Red,
+            "Sort" or "Black" => RouletteBetType.Black,
+            "Grøn" or "Gron" or "Green" => RouletteBetType.Green,
+            _ => throw new ArgumentOutOfRangeException(nameof(outcomeId), outcomeId, "Unknown roulette outcome description.")
+        };
+    }
+
+    private async Task<RouletteDto> BuildDtoAsync(RouletteSessionState s)
+    {
+        Guid sessionId;
+        RouletteSessionStatus status;
+        int activeUsers;
+        int secondsLeft;
+        int? winningNumber;
+        RouletteBetType? winningColor;
+        List<Guid> participants;
+        List<(Guid UserId, RouletteBetDto Bet)> betsCopy;
+
         lock (s.SyncRoot)
         {
-            return new RouletteDto
-            {
-                SessionId = s.SessionId,
-                Status = s.Status,
-                ActiveUsers = s.Participants.Count,
-                MaxUsers = MaxUsersPerSession,
-                SecondsLeft = Math.Max(
-                    0,
-                    s.RoundDurationSeconds - (int)(DateTime.UtcNow - s.RoundStartedUtc).TotalSeconds
-                ),
-                WinningNumber = s.WinningNumber,
-                WinningColor = s.WinningColor,
-                Participants = s.Participants.ToList()
-            };
+            sessionId = s.SessionId;
+            status = s.Status;
+            activeUsers = s.Participants.Count;
+            secondsLeft = Math.Max(
+                0,
+                s.RoundDurationSeconds - (int)(DateTime.UtcNow - s.RoundStartedUtc).TotalSeconds
+            );
+            winningNumber = s.WinningNumber;
+            winningColor = s.WinningColor;
+            participants = s.Participants.ToList();
+            betsCopy = s.Bets.ToList();
         }
+
+        var entries = new List<RouletteBetEntryDto>(betsCopy.Count);
+        foreach (var (uid, bet) in betsCopy)
+        {
+            var acc = await _userRepo.GetByIdAsync(uid);
+            entries.Add(new RouletteBetEntryDto
+            {
+                UserId = uid,
+                Username = acc?.Username ?? "?",
+                Amount = bet.Amount,
+                BetType = bet.BetType
+            });
+        }
+
+        var totalRed = entries.Where(e => e.BetType == RouletteBetType.Red).Sum(e => e.Amount);
+        var totalBlack = entries.Where(e => e.BetType == RouletteBetType.Black).Sum(e => e.Amount);
+        var totalGreen = entries.Where(e => e.BetType == RouletteBetType.Green).Sum(e => e.Amount);
+
+        return new RouletteDto
+        {
+            SessionId = sessionId,
+            Status = status,
+            ActiveUsers = activeUsers,
+            MaxUsers = MaxUsersPerSession,
+            SecondsLeft = secondsLeft,
+            WinningNumber = winningNumber,
+            WinningColor = winningColor,
+            Participants = participants,
+            CurrentRoundBets = entries,
+            TotalOnRed = totalRed,
+            TotalOnBlack = totalBlack,
+            TotalOnGreen = totalGreen
+        };
     }
 }

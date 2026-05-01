@@ -4,7 +4,7 @@ namespace WiseBet.backend.Services.DTOs;
 public class RouletteDto
 {
     public Guid SessionId {get; set;}
-    public RouletteSessionStatus Status{get; set;}
+    public RouletteSessionStatus Status {get; set;}
 
     public int ActiveUsers {get; set;}
     public int MaxUsers {get; set;} = 5; 
@@ -15,4 +15,10 @@ public class RouletteDto
     
     public RouletteBetType? WinningColor { get; set; }
     public List<Guid> Participants { get; set; } = new();
+
+    public List<RouletteBetEntryDto> CurrentRoundBets { get; set; } = new();
+
+    public int TotalOnRed { get; set; }
+    public int TotalOnBlack { get; set; }
+    public int TotalOnGreen { get; set; }
 }

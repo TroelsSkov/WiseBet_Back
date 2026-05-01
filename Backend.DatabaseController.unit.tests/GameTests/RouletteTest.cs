@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 using System.Reflection;
 using WiseBet.backend.Data;
 using WiseBet.backend.IRepository;
@@ -25,14 +26,19 @@ public class RouletteTest
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
         _context = new DatabaseContext(options);
+        _context.Outcomes.AddRange(
+            new Outcome { OutcomeDescription = "Rød" },
+            new Outcome { OutcomeDescription = "Sort" },
+            new Outcome { OutcomeDescription = "Grøn" }
+        );
+        _context.SaveChanges();
 
         _userRepo = new UserAccountRepository(_context);
         _roundRepo = new RoundRepository(_context);
         _betRepo = new BetRepository(_context);
         _store = new RouletteSessionStore();
 
-        _uut = new RouletteService(_userRepo, _roundRepo, _betRepo, _store);
-
+        _uut = new RouletteService(_userRepo, _roundRepo, _betRepo, _context, _store, NullLogger<RouletteService>.Instance);
     }
 
     [TearDown]
@@ -49,8 +55,8 @@ public class RouletteTest
         var firstJoin = await _uut.JoinRouletteSession(userId);
         var secondJoin = await _uut.JoinRouletteSession(userId);
 
-        Assert.That(secondJoin.SessionId, Is.EqualTo(firstJoin.SessionId));
-        Assert.That(secondJoin.ActiveUsers, Is.EqualTo(1));
+        Assert.That(secondJoin.Current.SessionId, Is.EqualTo(firstJoin.Current.SessionId));
+        Assert.That(secondJoin.Current.ActiveUsers, Is.EqualTo(1));
     }
 
     [Test]
@@ -63,15 +69,15 @@ public class RouletteTest
 
         for (var i = 0; i < users.Count; i++)
         {
-            var dto = await _uut.JoinRouletteSession(users[i]);
-            if (i == 0) firstSession = dto;
-            if (i == 5) sixthSession = dto;
+            var update = await _uut.JoinRouletteSession(users[i]);
+            if (i == 0) firstSession = update.Current;
+            if (i == 5) sixthSession = update.Current;
         }
 
         var refreshedFirstSession = await _uut.JoinRouletteSession(users[0]);
 
         Assert.That(firstSession.SessionId, Is.Not.EqualTo(sixthSession.SessionId));
-        Assert.That(refreshedFirstSession.ActiveUsers, Is.EqualTo(5));
+        Assert.That(refreshedFirstSession.Current.ActiveUsers, Is.EqualTo(5));
         Assert.That(sixthSession.ActiveUsers, Is.EqualTo(1));
     }
 
@@ -117,6 +123,30 @@ public class RouletteTest
         Assert.That(updatedUser.Saldo, Is.EqualTo(75));
 
         Assert.That(_context.BetHistories.Count(), Is.EqualTo(1));
+    }
+
+    [Test]
+    public async Task ProcessSessionTimers_ExpiredRound_IncludesRoundFinishedDtoWithWinningNumber()
+    {
+        var userId = Guid.NewGuid();
+        _context.UserAccounts.Add(new UserAccount { UserID = userId, Username = "T", Saldo = 1000 });
+        await _context.SaveChangesAsync();
+
+        await _uut.JoinRouletteSession(userId);
+        var session = _store.GetSessionForUser(userId)!;
+        lock (session.SyncRoot)
+        {
+            session.RoundStartedUtc = DateTime.UtcNow.AddSeconds(-120);
+        }
+
+        var dtos = await _uut.ProcessSessionTimersAsync();
+
+        var finished = dtos.FirstOrDefault(d =>
+            d.Status == RouletteSessionStatus.RoundFinished && d.WinningNumber is >= 0 and <= 36);
+        Assert.That(finished, Is.Not.Null, "Forventet RoundFinished med winningNumber før ny BettingOpen.");
+
+        Assert.That(dtos.Any(d => d.Status == RouletteSessionStatus.BettingOpen && d.WinningNumber == null),
+            Is.True, "Forventet ny runde uden vindertal efter resolve.");
     }
 
     [TestCase(0, RouletteBetType.Green)]

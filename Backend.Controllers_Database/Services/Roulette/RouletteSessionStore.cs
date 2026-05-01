@@ -13,40 +13,69 @@ public class RouletteSessionStore
         }
     }
 
-    public RouletteSessionState? GetSessionWithCapacity(int maxUsersPerSession)
+    public RouletteSessionState? TryJoinExistingSession(Guid userId, int maxUsersPerSession)
     {
         lock (_lock)
         {
-            return _sessions.FirstOrDefault(s => s.Participants.Count < maxUsersPerSession);
+            foreach (var s in _sessions)
+            {
+                if (s.Participants.Contains(userId))
+                    return s;
+            }
+
+            foreach (var s in _sessions)
+            {
+                if (s.Participants.Count < maxUsersPerSession)
+                {
+                    s.Participants.Add(userId);
+                    return s;
+                }
+            }
+
+            return null;
         }
     }
 
-    public RouletteSessionState CreateSession()
+    public RouletteSessionState CreateNewSessionWithUser(Guid userId)
     {
         lock (_lock)
         {
+            foreach (var s in _sessions)
+            {
+                if (s.Participants.Contains(userId))
+                    return s;
+            }
+
             var session = new RouletteSessionState();
+            session.Participants.Add(userId);
             _sessions.Add(session);
             return session;
         }
     }
 
-    public void AddUserToSession(RouletteSessionState session, Guid userId)
-    {
-        lock (_lock)
-        {
-            session.Participants.Add(userId);
-        }
-    }
 
     public void RemoveUserFromSession(RouletteSessionState session, Guid userId)
     {
         lock (_lock)
         {
             session.Participants.Remove(userId);
-            session.Bets.RemoveAll(x => x.UserId == userId);
             if (session.Participants.Count == 0)
                 _sessions.Remove(session);
+        }
+    }
+
+    public bool IsLastParticipant(RouletteSessionState session, Guid userId)
+    {
+        lock (_lock)
+        {
+            return session.Participants.Count == 1 && session.Participants.Contains(userId);
+        }
+    }
+    public IReadOnlyList<RouletteSessionState> SnapshotSessions()
+    {
+        lock (_lock)
+        {
+            return _sessions.ToArray();
         }
     }
 }

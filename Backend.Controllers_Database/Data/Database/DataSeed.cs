@@ -13,12 +13,15 @@ namespace WiseBet.backend.Data
             d_context = c;
         }
 
-        public async void Seed()
+        public async Task SeedAsync()
         {
-            // Sikrer at databasen er opdateret
             await d_context.Database.MigrateAsync();
 
-            // Tjek om der allerede er data (undgå duplikering)
+            await EnsureOutcomeAsync("Rød");
+            await EnsureOutcomeAsync("Sort");
+            await EnsureOutcomeAsync("Grøn");
+            await d_context.SaveChangesAsync();
+
             if (await d_context.UserAccounts.AnyAsync()) return;
 
             // 1. Opret alle 20 oprindelige brugere
@@ -47,6 +50,19 @@ namespace WiseBet.backend.Data
     };
             await d_context.UserAccounts.AddRangeAsync(users);
             await d_context.SaveChangesAsync();
+        }
+
+        private async Task EnsureOutcomeAsync(string description)
+        {
+            var existingByDescription = await d_context.Outcomes
+                .FirstOrDefaultAsync(o => o.OutcomeDescription == description);
+            if (existingByDescription != null)
+                return;
+
+            await d_context.Outcomes.AddAsync(new Outcome
+            {
+                OutcomeDescription = description
+            });
         }
     }
 }

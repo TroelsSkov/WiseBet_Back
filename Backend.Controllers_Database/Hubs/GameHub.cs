@@ -1,11 +1,7 @@
-using Microsoft.AspNetCore.Mvc;
-using WiseBet.backend.DTOs;
-using WiseBet.backend.Controllers.DTOs;
-using WiseBet.backend.IRepository;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 using Microsoft.AspNetCore.SignalR;
-using Sprache;
 using WiseBet.backend.Data;
-using Microsoft.VisualBasic;
 using WiseBet.backend.Services.Blackjack;
 using WiseBet.backend.Services.Coinflip;
 using WiseBet.backend.Services.Coinflip.Validation;
@@ -14,7 +10,7 @@ using WiseBet.backend.Services.DTOs;
 
 namespace WiseBet.backend.Hubs;
 
-
+[Authorize]
 public class GameHub : Hub
 {
     private static readonly Dictionary<string, Guid> RouletteConnections = new();
@@ -30,13 +26,18 @@ public class GameHub : Hub
         _coinflip = coinflip;
         _validate = validation;
         _blackjack = blackjack;
-        _roulette = roulette; 
+        _roulette = roulette;
+    }
+
+    private bool TryGetAuthenticatedUserId(out Guid userId)
+    {
+        userId = default;
+        var claim = Context.User?.FindFirst("UserRepoConnect")?.Value;
+        return !string.IsNullOrEmpty(claim) && Guid.TryParse(claim, out userId);
     }
 
     public async Task PlayRound(Guid UserId, int Amount, CoinSide ChosenSide)
     {
-        Console.WriteLine($"[GameHub] PLayer information:\n   UserID: {UserId}\n   Amount: {Amount}\n   Chosenside: {ChosenSide}");
-
         var validate = await _validate.ValidateBet(UserId, Amount);
 
         if (validate.Fail == true)
@@ -57,7 +58,6 @@ public class GameHub : Hub
 
     public async Task StartRoundBlackjack(Guid UserId, int bet)
     {
-        Console.WriteLine($"[GameHub] PLayer information:\n   UserID: {UserId}\n   Amount: {bet}\n");
         var validate = await _validate.ValidateBet(UserId, bet);
 
         if (validate.Fail == true)
@@ -75,6 +75,7 @@ public class GameHub : Hub
             await Clients.Caller.SendAsync("ErrorMessageToClient", e.Message);
         }
     }
+
     public async Task HitBlackjack(Guid UserId)
     {
         try
@@ -87,6 +88,7 @@ public class GameHub : Hub
             await Clients.Caller.SendAsync("ErrorMessageToClient", e.Message);
         }
     }
+
     public async Task StandBlackjack(Guid UserId)
     {
         try
@@ -100,18 +102,34 @@ public class GameHub : Hub
         }
     }
 
-    public async Task JoinRouletteSession(Guid UserId)
+    private async Task BroadcastRouletteSessionAsync(RouletteSessionUpdate update)
     {
+        foreach (var dto in update.BroadcastFirst)
+        {
+            await Clients.Group(dto.SessionId.ToString()).SendAsync("UpdateClient", dto);
+        }
+
+        await Clients.Group(update.Current.SessionId.ToString()).SendAsync("UpdateClient", update.Current);
+    }
+
+    public async Task JoinRouletteSession()
+    {
+        if (!TryGetAuthenticatedUserId(out var userId))
+        {
+            await Clients.Caller.SendAsync("ErrorMessageToClient", "Kunne ikke finde bruger. Log ind igen.");
+            return;
+        }
+
         try
         {
-            var result = await _roulette.JoinRouletteSession(UserId);
-            var group = result.SessionId.ToString();
+            var update = await _roulette.JoinRouletteSession(userId);
+            var group = update.Current.SessionId.ToString();
             lock (RouletteConnectionsLock)
             {
-                RouletteConnections[Context.ConnectionId] = UserId;
+                RouletteConnections[Context.ConnectionId] = userId;
             }
             await Groups.AddToGroupAsync(Context.ConnectionId, group);
-            await Clients.Group(group).SendAsync("RouletteUpdated", result);
+            await BroadcastRouletteSessionAsync(update);
         }
         catch (Exception e)
         {
@@ -119,17 +137,23 @@ public class GameHub : Hub
         }
     }
 
-    public async Task LeaveRouletteSession(Guid UserId)
+    public async Task LeaveRouletteSession()
     {
+        if (!TryGetAuthenticatedUserId(out var userId))
+        {
+            await Clients.Caller.SendAsync("ErrorMessageToClient", "Kunne ikke finde bruger. Log ind igen.");
+            return;
+        }
+
         try
         {
-            var result = await _roulette.LeaveRouletteSession(UserId);
-            var group = result.SessionId.ToString();
+            var update = await _roulette.LeaveRouletteSession(userId);
+            var group = update.Current.SessionId.ToString();
             lock (RouletteConnectionsLock)
             {
                 RouletteConnections.Remove(Context.ConnectionId);
             }
-            await Clients.Group(group).SendAsync("RouletteUpdated", result);
+            await BroadcastRouletteSessionAsync(update);
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, group);
         }
         catch (Exception e)
@@ -138,15 +162,21 @@ public class GameHub : Hub
         }
     }
 
-    public async Task PlaceRouletteBet(Guid UserId, RouletteBetDto bet)
+    public async Task PlaceRouletteBet(RouletteBetDto bet)
     {
+        if (!TryGetAuthenticatedUserId(out var userId))
+        {
+            await Clients.Caller.SendAsync("ErrorMessageToClient", "Kunne ikke finde bruger. Log ind igen.");
+            return;
+        }
+
         if (bet == null)
         {
             await Clients.Caller.SendAsync("ErrorMessageToClient", "Bet payload is required.");
             return;
         }
 
-        var validate = await _validate.ValidateBet(UserId, bet.Amount);
+        var validate = await _validate.ValidateBet(userId, bet.Amount);
         if (validate.Fail)
         {
             await Clients.Caller.SendAsync("ErrorMessageToClient", validate.Message);
@@ -155,8 +185,8 @@ public class GameHub : Hub
 
         try
         {
-            var result = await _roulette.PlaceRouletteBet(UserId, bet);
-            await Clients.Group(result.SessionId.ToString()).SendAsync("RouletteUpdated", result);
+            var update = await _roulette.PlaceRouletteBet(userId, bet);
+            await BroadcastRouletteSessionAsync(update);
         }
         catch (Exception e)
         {
@@ -167,27 +197,27 @@ public class GameHub : Hub
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         Guid userId;
+        var hadRoulette = false;
         lock (RouletteConnectionsLock)
         {
-            if (!RouletteConnections.TryGetValue(Context.ConnectionId, out userId))
-            {
-                return;
-            }
-            RouletteConnections.Remove(Context.ConnectionId);
+            hadRoulette = RouletteConnections.TryGetValue(Context.ConnectionId, out userId);
+            if (hadRoulette)
+                RouletteConnections.Remove(Context.ConnectionId);
         }
 
-        try
+        if (hadRoulette)
         {
-            var result = await _roulette.LeaveRouletteSession(userId);
-            await Clients.Group(result.SessionId.ToString()).SendAsync("RouletteUpdated", result);
+            try
+            {
+                var update = await _roulette.LeaveRouletteSession(userId);
+                await BroadcastRouletteSessionAsync(update);
+            }
+            catch
+            {
+                // Best effort cleanup when a disconnected user is no longer in session.
+            }
         }
-        catch
-        {
-            // Best effort cleanup when a disconnected user is no longer in session.
-        }
-        finally
-        {
-            await base.OnDisconnectedAsync(exception);
-        }
+
+        await base.OnDisconnectedAsync(exception);
     }
 }

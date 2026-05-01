@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Moq;
 using NUnit.Framework;
 using Microsoft.AspNetCore.SignalR;
@@ -56,6 +57,14 @@ public class GameHubTest
         };
     }
 
+    private void SetRouletteAuthenticatedUser(Guid userId)
+    {
+        var identity = new ClaimsIdentity(
+            new[] { new Claim("UserRepoConnect", userId.ToString()) },
+            authenticationType: "Test");
+        _context.User.Returns(new ClaimsPrincipal(identity));
+    }
+
     [TearDown]
     public void TearDown()
     {
@@ -68,6 +77,7 @@ public class GameHubTest
     public async Task PlayRound_ValidationFails_BetNotAccepted()
     {
         Guid userID = Guid.NewGuid();
+        SetRouletteAuthenticatedUser(userID);
         var fail = new CoinFlipDTO { Fail = true, Message = "Mistake Found" };
         _Ivalidation.ValidateBet(userID, 100).Returns(fail);
 
@@ -82,6 +92,7 @@ public class GameHubTest
     public async Task PlayRound_ValidationAccepts_BetIsAccepted()
     {
         Guid userID = Guid.NewGuid();
+        SetRouletteAuthenticatedUser(userID);
         _Ivalidation.ValidateBet(userID, 100).Returns(new CoinFlipDTO { Fail = false, Message = "BetAccepted" });
 
         await _hub.PlayRound(userID, 100, CoinSide.Coin);
@@ -94,6 +105,7 @@ public class GameHubTest
     public async Task StartRoundBlackjack_ValidationFails_BetNotAccepted()
     {
         Guid userID = Guid.NewGuid();
+        SetRouletteAuthenticatedUser(userID);
         var fail = new CoinFlipDTO { Fail = true, Message = "Mistake Found" };
         _Ivalidation.ValidateBet(userID, 100).Returns(fail);
 
@@ -108,6 +120,7 @@ public class GameHubTest
     public async Task StartRoundBlackjack_ValidationAccepts_ServiceIsCalled()
     {
         Guid userID = Guid.NewGuid();
+        SetRouletteAuthenticatedUser(userID);
         _Ivalidation.ValidateBet(userID, 100).Returns(new CoinFlipDTO { Fail = false, Message = ""  });
         _Iblackjack.StartRound(userID, 100).Returns(new BlackjackDto());
 
@@ -120,6 +133,7 @@ public class GameHubTest
     public async Task HitBlackjack_ServiceIsCalled()
     {
         Guid userID = Guid.NewGuid();
+        SetRouletteAuthenticatedUser(userID);
         _Iblackjack.Hit(userID).Returns(new BlackjackDto());
 
         await _hub.HitBlackjack(userID);
@@ -131,6 +145,7 @@ public class GameHubTest
     public async Task HitBlackjack_ServiceThrows_ErrorSentToClient()
     {
         Guid userID = Guid.NewGuid();
+        SetRouletteAuthenticatedUser(userID);
         _Iblackjack.Hit(userID).Throws(new Exception("Fejl"));
 
         await _hub.HitBlackjack(userID);
@@ -143,6 +158,7 @@ public class GameHubTest
     public async Task StandBlackjack_ServiceIsCalled()
     {
         Guid userID = Guid.NewGuid();
+        SetRouletteAuthenticatedUser(userID);
         _Iblackjack.Stand(userID).Returns(new BlackjackDto());
 
         await _hub.StandBlackjack(userID);
@@ -154,6 +170,7 @@ public class GameHubTest
     public async Task StandBlackjack_ServiceThrows_ErrorSentToClient()
     {
         Guid userID = Guid.NewGuid();
+        SetRouletteAuthenticatedUser(userID);
         _Iblackjack.Stand(userID).Throws(new Exception("Fejl"));
 
         await _hub.StandBlackjack(userID);
@@ -167,21 +184,25 @@ public class GameHubTest
     {
         var userId = Guid.NewGuid();
         var sessionId = Guid.NewGuid();
-        _Iroulette.JoinRouletteSession(userId).Returns(new RouletteDto { SessionId = sessionId });
+        SetRouletteAuthenticatedUser(userId);
+        _Iroulette.JoinRouletteSession(userId).Returns(new RouletteSessionUpdate(
+            Array.Empty<RouletteDto>(),
+            new RouletteDto { SessionId = sessionId }));
 
-        await _hub.JoinRouletteSession(userId);
+        await _hub.JoinRouletteSession();
 
         await _Iroulette.Received().JoinRouletteSession(userId);
         await _Igroups.Received().AddToGroupAsync(Arg.Any<string>(), sessionId.ToString(), default);
-        await _IgroupProxy.Received().SendCoreAsync("RouletteUpdated", Arg.Any<object[]>(), default);
+        await _IgroupProxy.Received().SendCoreAsync("UpdateClient", Arg.Any<object[]>(), default);
     }
 
     [Test]
     public async Task PlaceRouletteBet_NullPayload_SendsErrorAndSkipsService()
     {
         var userId = Guid.NewGuid();
+        SetRouletteAuthenticatedUser(userId);
 
-        await _hub.PlaceRouletteBet(userId, null);
+        await _hub.PlaceRouletteBet(null!);
 
         await _Iproxy.Received().SendCoreAsync("ErrorMessageToClient", Arg.Any<object[]>(), default);
         await _Iroulette.DidNotReceive().PlaceRouletteBet(Arg.Any<Guid>(), Arg.Any<RouletteBetDto>());
@@ -192,13 +213,16 @@ public class GameHubTest
     {
         var userId = Guid.NewGuid();
         var sessionId = Guid.NewGuid();
+        SetRouletteAuthenticatedUser(userId);
         var bet = new RouletteBetDto { Amount = 10, BetType = RouletteBetType.Red };
         _Ivalidation.ValidateBet(userId, 10).Returns(new CoinFlipDTO { Fail = false, Message = "ok" });
-        _Iroulette.PlaceRouletteBet(userId, bet).Returns(new RouletteDto { SessionId = sessionId });
+        _Iroulette.PlaceRouletteBet(userId, bet).Returns(new RouletteSessionUpdate(
+            Array.Empty<RouletteDto>(),
+            new RouletteDto { SessionId = sessionId }));
 
-        await _hub.PlaceRouletteBet(userId, bet);
+        await _hub.PlaceRouletteBet(bet);
 
         await _Iroulette.Received().PlaceRouletteBet(userId, bet);
-        await _IgroupProxy.Received().SendCoreAsync("RouletteUpdated", Arg.Any<object[]>(), default);
+        await _IgroupProxy.Received().SendCoreAsync("UpdateClient", Arg.Any<object[]>(), default);
     }
 }
