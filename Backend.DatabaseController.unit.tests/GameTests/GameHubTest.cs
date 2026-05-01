@@ -81,7 +81,7 @@ public class GameHubTest
         var fail = new CoinFlipDTO { Fail = true, Message = "Mistake Found" };
         _Ivalidation.ValidateBet(userID, 100).Returns(fail);
 
-        await _hub.PlayRound(userID, 100, CoinSide.Coin);
+        await _hub.PlayRound(100, CoinSide.Coin);
 
         await _Iproxy.Received().SendCoreAsync("ErrorMessageToClient",
         Arg.Is<object[]>(o => o[0].ToString() == "Mistake Found"), default);
@@ -95,7 +95,7 @@ public class GameHubTest
         SetRouletteAuthenticatedUser(userID);
         _Ivalidation.ValidateBet(userID, 100).Returns(new CoinFlipDTO { Fail = false, Message = "BetAccepted" });
 
-        await _hub.PlayRound(userID, 100, CoinSide.Coin);
+        await _hub.PlayRound(100, CoinSide.Coin);
 
         await _Icoinflip.Received().PlayRound(userID, 100, CoinSide.Coin);
     }
@@ -109,7 +109,7 @@ public class GameHubTest
         var fail = new CoinFlipDTO { Fail = true, Message = "Mistake Found" };
         _Ivalidation.ValidateBet(userID, 100).Returns(fail);
 
-        await _hub.StartRoundBlackjack(userID, 100);
+        await _hub.StartRoundBlackjack(100);
 
         await _Iproxy.Received().SendCoreAsync("ErrorMessageToClient",
         Arg.Is<object[]>(o => o[0].ToString() == "Mistake Found"), default);
@@ -124,7 +124,7 @@ public class GameHubTest
         _Ivalidation.ValidateBet(userID, 100).Returns(new CoinFlipDTO { Fail = false, Message = ""  });
         _Iblackjack.StartRound(userID, 100).Returns(new BlackjackDto());
 
-        await _hub.StartRoundBlackjack(userID, 100);
+        await _hub.StartRoundBlackjack(100);
 
         await _Iblackjack.Received().StartRound(userID, 100);
     }
@@ -136,7 +136,7 @@ public class GameHubTest
         SetRouletteAuthenticatedUser(userID);
         _Iblackjack.Hit(userID).Returns(new BlackjackDto());
 
-        await _hub.HitBlackjack(userID);
+        await _hub.HitBlackjack();
 
         await _Iblackjack.Received().Hit(userID);
     }
@@ -148,7 +148,7 @@ public class GameHubTest
         SetRouletteAuthenticatedUser(userID);
         _Iblackjack.Hit(userID).Throws(new Exception("Fejl"));
 
-        await _hub.HitBlackjack(userID);
+        await _hub.HitBlackjack();
 
         await _Iproxy.Received().SendCoreAsync("ErrorMessageToClient",
         Arg.Is<object[]>(o => o[0].ToString() == "Fejl"), default);
@@ -161,7 +161,7 @@ public class GameHubTest
         SetRouletteAuthenticatedUser(userID);
         _Iblackjack.Stand(userID).Returns(new BlackjackDto());
 
-        await _hub.StandBlackjack(userID);
+        await _hub.StandBlackjack();
 
         await _Iblackjack.Received().Stand(userID);
     }
@@ -173,7 +173,7 @@ public class GameHubTest
         SetRouletteAuthenticatedUser(userID);
         _Iblackjack.Stand(userID).Throws(new Exception("Fejl"));
 
-        await _hub.StandBlackjack(userID);
+        await _hub.StandBlackjack();
 
         await _Iproxy.Received().SendCoreAsync("ErrorMessageToClient",
         Arg.Is<object[]>(o => o[0].ToString() == "Fejl"), default);

@@ -36,9 +36,15 @@ public class GameHub : Hub
         return !string.IsNullOrEmpty(claim) && Guid.TryParse(claim, out userId);
     }
 
-    public async Task PlayRound(Guid UserId, int Amount, CoinSide ChosenSide)
+    public async Task PlayRound(int Amount, CoinSide ChosenSide)
     {
-        var validate = await _validate.ValidateBet(UserId, Amount);
+        if (!TryGetAuthenticatedUserId(out var userId))
+        {
+            await Clients.Caller.SendAsync("ErrorMessageToClient", "Kunne ikke finde bruger. Log ind igen.");
+            return;
+        }
+
+        var validate = await _validate.ValidateBet(userId, Amount);
 
         if (validate.Fail == true)
         {
@@ -47,7 +53,7 @@ public class GameHub : Hub
         }
         try
         {
-            var result = await _coinflip.PlayRound(UserId, Amount, ChosenSide);
+            var result = await _coinflip.PlayRound(userId, Amount, ChosenSide);
             await Clients.Caller.SendAsync("UpdateClient", result);
         }
         catch (Exception e)
@@ -56,9 +62,15 @@ public class GameHub : Hub
         }
     }
 
-    public async Task StartRoundBlackjack(Guid UserId, int bet)
+    public async Task StartRoundBlackjack(int bet)
     {
-        var validate = await _validate.ValidateBet(UserId, bet);
+        if (!TryGetAuthenticatedUserId(out var userId))
+        {
+            await Clients.Caller.SendAsync("ErrorMessageToClient", "Kunne ikke finde bruger. Log ind igen.");
+            return;
+        }
+
+        var validate = await _validate.ValidateBet(userId, bet);
 
         if (validate.Fail == true)
         {
@@ -67,7 +79,7 @@ public class GameHub : Hub
         }
         try
         {
-            var result = await _blackjack.StartRound(UserId, bet);
+            var result = await _blackjack.StartRound(userId, bet);
             await Clients.Caller.SendAsync("UpdateClient", result);
         }
         catch (Exception e)
@@ -76,11 +88,17 @@ public class GameHub : Hub
         }
     }
 
-    public async Task HitBlackjack(Guid UserId)
+    public async Task HitBlackjack()
     {
+        if (!TryGetAuthenticatedUserId(out var userId))
+        {
+            await Clients.Caller.SendAsync("ErrorMessageToClient", "Kunne ikke finde bruger. Log ind igen.");
+            return;
+        }
+
         try
         {
-            var result = await _blackjack.Hit(UserId);
+            var result = await _blackjack.Hit(userId);
             await Clients.Caller.SendAsync("UpdateClient", result);
         }
         catch (Exception e)
@@ -89,11 +107,17 @@ public class GameHub : Hub
         }
     }
 
-    public async Task StandBlackjack(Guid UserId)
+    public async Task StandBlackjack()
     {
+        if (!TryGetAuthenticatedUserId(out var userId))
+        {
+            await Clients.Caller.SendAsync("ErrorMessageToClient", "Kunne ikke finde bruger. Log ind igen.");
+            return;
+        }
+
         try
         {
-            var result = await _blackjack.Stand(UserId);
+            var result = await _blackjack.Stand(userId);
             await Clients.Caller.SendAsync("UpdateClient", result);
         }
         catch (Exception e)
