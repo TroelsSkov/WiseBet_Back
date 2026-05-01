@@ -21,8 +21,10 @@ public class GameHub : Hub
         _blackjack = blackjack;
     }
 
-    public async Task PlayRound(Guid UserId, int Amount, CoinSide ChosenSide)
+        public async Task PlayRound(int Amount, CoinSide ChosenSide)
     {
+        var UserIdString = this.Context.User.FindFirst("ID")?.Value;
+        Guid.TryParse(UserIdString, out Guid UserId);
         Console.WriteLine($"[GameHub] PLayer information:\n   UserID: {UserId}\n   Amount: {Amount}\n   Chosenside: {ChosenSide}");
 
         var validate = await _validate.ValidateBet(UserId, Amount);
@@ -32,17 +34,11 @@ public class GameHub : Hub
             await Clients.Caller.SendAsync("ErrorMessageToClient", validate.Message);
             return;
         }
-        try
-        {
-            var result = await _coinflip.PlayRound(UserId, Amount, ChosenSide);
-            await Clients.Caller.SendAsync("UpdateClient", result);
-        }
-        catch (Exception e)
-        {
-            await Clients.Caller.SendAsync("ErrorMessageToClient", e.Message);
-        }
-    }
 
+        var result = await _coinflip.PlayRound(UserId, Amount, ChosenSide);
+
+        await Clients.Caller.SendAsync("UpdateClient", result);
+    }
     public async Task StartRoundBlackjack(Guid UserId, int bet)
     {
         Console.WriteLine($"[GameHub] PLayer information:\n   UserID: {UserId}\n   Amount: {bet}\n");
