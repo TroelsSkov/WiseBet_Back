@@ -106,6 +106,9 @@ public class BlackjackService : IBlackjackService
         var user = await _userRepo.GetByIdAsync(id);
 
         var gameState = _activeGames[id];
+        if (CalculateScore(gameState.DealerHand) == 21)
+                gameState.State = GameStatus.DealerWin;
+            
 
         while (CalculateScore(gameState.DealerHand) < 17)
         {
