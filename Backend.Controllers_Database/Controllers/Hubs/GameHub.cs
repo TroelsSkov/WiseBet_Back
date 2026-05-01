@@ -19,8 +19,10 @@ public class GameHub : Hub
         _validate = validation;
     }
 
-    public async Task PlayRound(Guid UserId, int Amount, CoinSide ChosenSide)
+    public async Task PlayRound(int Amount, CoinSide ChosenSide)
     {
+        var UserIdString = this.Context.User.FindFirst("ID")?.Value;
+        Guid.TryParse(UserIdString, out Guid UserId);
         Console.WriteLine($"[GameHub] PLayer information:\n   UserID: {UserId}\n   Amount: {Amount}\n   Chosenside: {ChosenSide}");
 
         var validate = await _validate.ValidateBet(UserId, Amount);

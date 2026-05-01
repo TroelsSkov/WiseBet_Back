@@ -13,6 +13,8 @@ public class CoinFlipTest
 {
     private CoinFlipService _uut;
     private UserAccountRepository repo;
+    private BetRepository betRepo;
+    private RoundRepository roundRepo;
 
     [SetUp]
     public void Setup()
@@ -22,7 +24,9 @@ public class CoinFlipTest
             .Options;
         var fakeContext = new DatabaseContext(options);
         repo = Substitute.For<UserAccountRepository>(fakeContext);
-        _uut = new CoinFlipService(repo);
+        betRepo = Substitute.For<BetRepository>(fakeContext);
+        roundRepo = Substitute.For<RoundRepository>(fakeContext);
+        _uut = new CoinFlipService(repo, betRepo, roundRepo);
     }
 
     [Test]
