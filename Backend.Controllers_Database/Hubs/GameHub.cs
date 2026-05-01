@@ -7,8 +7,10 @@ using Sprache;
 using WiseBet.backend.Data;
 using Microsoft.VisualBasic;
 using WiseBet.backend.Services;
+using Microsoft.AspNetCore.Authorization;
 namespace WiseBet.backend.Hubs;
 
+[Authorize]
 public class GameHub : Hub
 {
     private ICoinflipService _coinflip;
@@ -57,8 +59,8 @@ public class GameHub : Hub
         }
         try
         {
-            var result = await _blackjack.StartRound(userId, bet);
-            await Clients.Caller.SendAsync("UpdateClient", result);
+            CancellationToken cancellationToken = this.Context.ConnectionAborted;
+            await _blackjack.PlayBJRound(this.Clients.Caller, cancellationToken, userId, bet);
         }
         catch (Exception e)
         {
@@ -92,5 +94,11 @@ public class GameHub : Hub
         {
             await Clients.Caller.SendAsync("ErrorMessageToClient", e.Message);
         }
+    }
+
+    public override async Task OnConnectedAsync()
+    {
+        Console.WriteLine($"[Hub] Client connected: {Context.ConnectionId}");
+        await base.OnConnectedAsync();
     }
 }

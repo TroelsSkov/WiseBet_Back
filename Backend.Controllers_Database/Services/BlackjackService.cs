@@ -3,6 +3,7 @@ using WiseBet.backend.Data;
 using WiseBet.backend.Services.Blackjack;
 using WiseBet.backend.IRepository;
 using System.Security.Claims;
+using Microsoft.AspNetCore.SignalR;
 
 namespace WiseBet.backend.Services;
 
@@ -17,6 +18,7 @@ public class BlackjackService : IBlackjackService
         _userRepo = userRepo;
         _deckFactory = deckFactory;
     }
+
     private int CalculateScoreDealer(Card card)
     {
         return card.Value;
@@ -54,6 +56,32 @@ public class BlackjackService : IBlackjackService
             : CalculateScore(gameState.DealerHand)
         };
     }
+
+    public async Task PlayBJRound(ISingleClientProxy caller, CancellationToken cancellationToken, Guid userID, int bet)
+    {
+        Console.WriteLine($"[BlackJackService] Has started!");
+
+        var dto = await StartRound(userID, bet);
+        await caller.SendAsync("UpdateClient", dto);
+        var nextAction = await caller.InvokeAsync<string>("NextAction", cancellationToken);
+        Console.WriteLine($"[BlackJackService] We saw the follwing from the user: {nextAction}");
+        // while (true)
+        // {
+            nextAction = "";
+            nextAction = await caller.InvokeAsync<string>("NextAction", cancellationToken);
+            if (nextAction == "hit")
+            {
+                dto = await Hit(userID);
+                await caller.SendAsync("UpdateClient", dto);
+            }
+            else if (nextAction == "stand")
+            {
+                dto = await Stand(userID);
+                await caller.SendAsync("UpdateClient", dto);
+            }
+        // }
+    }
+
 
     public async Task<BlackjackDto> StartRound(Guid id, int bet)
     {
