@@ -2,6 +2,8 @@ using WiseBet.backend.Services.DTOs;
 using WiseBet.backend.IRepository;
 using WiseBet.backend.Data;
 using WiseBet.backend.Models;
+using WiseBet.backend.DTOs;
+
 namespace WiseBet.backend.Services;
 
 public class CoinFlipService : ICoinflipService
