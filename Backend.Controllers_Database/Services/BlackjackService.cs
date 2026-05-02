@@ -65,21 +65,26 @@ public class BlackjackService : IBlackjackService
         await caller.SendAsync("UpdateClient", dto);
         var nextAction = await caller.InvokeAsync<string>("NextAction", cancellationToken);
         Console.WriteLine($"[BlackJackService] We saw the follwing from the user: {nextAction}");
-        // while (true)
-        // {
-            nextAction = "";
-            nextAction = await caller.InvokeAsync<string>("NextAction", cancellationToken);
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            dto = null;
             if (nextAction == "hit")
             {
                 dto = await Hit(userID);
                 await caller.SendAsync("UpdateClient", dto);
+                Console.WriteLine($"[BlackJackService] The player chose to hit");
+                if(dto.Status != GameStatus.Playing)
+                    return;
             }
             else if (nextAction == "stand")
             {
                 dto = await Stand(userID);
                 await caller.SendAsync("UpdateClient", dto);
+                Console.WriteLine($"[BlackJackService] The player chose to stand");
+                return;
             }
-        // }
+            nextAction = await caller.InvokeAsync<string>("NextAction", cancellationToken);
+        }
     }
 
 

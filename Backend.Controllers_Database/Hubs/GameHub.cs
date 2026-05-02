@@ -61,6 +61,7 @@ public class GameHub : Hub
         {
             CancellationToken cancellationToken = this.Context.ConnectionAborted;
             await _blackjack.PlayBJRound(this.Clients.Caller, cancellationToken, userId, bet);
+            Console.WriteLine("[GameHub] The blackjack round concluded...");
         }
         catch (Exception e)
         {
@@ -69,7 +70,7 @@ public class GameHub : Hub
     }
     public async Task HitBlackjack()
     {
-        var userClaim = this.Context.User.FindFirst("UserRepoConnect")?.Value;
+        var userClaim = this.Context.User?.FindFirst("UserRepoConnect")?.Value;
         Guid.TryParse(userClaim, out var userId);
         try
         {
@@ -83,7 +84,7 @@ public class GameHub : Hub
     }
     public async Task StandBlackjack()
     {
-        var userClaim = this.Context.User.FindFirst("UserRepoConnect")?.Value;
+        var userClaim = this.Context.User?.FindFirst("UserRepoConnect")?.Value;
         Guid.TryParse(userClaim, out var userId);
         try
         {
@@ -98,7 +99,13 @@ public class GameHub : Hub
 
     public override async Task OnConnectedAsync()
     {
-        Console.WriteLine($"[Hub] Client connected: {Context.ConnectionId}");
+        Console.WriteLine($"[Hub] Client connected: {this.Context.User?.FindFirst("UserRepoConnect")?.Value}");
         await base.OnConnectedAsync();
+    }
+
+    public override async Task OnDisconnectedAsync(Exception? exception)
+    {
+        Console.WriteLine($"[GameHub] Player {this.Context.User?.FindFirst("UserRepoConnect")?.Value} has disconnected");
+        await base.OnDisconnectedAsync(exception);
     }
 }
