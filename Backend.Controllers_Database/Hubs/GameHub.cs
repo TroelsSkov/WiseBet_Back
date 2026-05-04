@@ -23,8 +23,11 @@ public class GameHub : Hub
         _blackjack = blackjack;
     }
 
-    public async Task PlayRound(Guid UserId, int Amount, CoinSide ChosenSide)
+        public async Task PlayRound(int Amount, CoinSide ChosenSide)
     {
+        var UserIdString = this.Context.User?.FindFirst("UserRepoConnect")?.Value;
+        Guid.TryParse(UserIdString, out Guid UserId);
+        Console.WriteLine($"[GameHub] PLayer information:\n   UserID: {UserIdString}\n   Amount: {Amount}\n   Chosenside: {ChosenSide}");
         Console.WriteLine($"[GameHub] PLayer information:\n   UserID: {UserId}\n   Amount: {Amount}\n   Chosenside: {ChosenSide}");
 
         var validate = await _validate.ValidateBet(UserId, Amount);
@@ -34,18 +37,8 @@ public class GameHub : Hub
             await Clients.Caller.SendAsync("ErrorMessageToClient", validate.Message);
             return;
         }
-        try
-        {
-            var result = await _coinflip.PlayRound(UserId, Amount, ChosenSide);
-            await Clients.Caller.SendAsync("UpdateClient", result);
-        }
-        catch (Exception e)
-        {
-            await Clients.Caller.SendAsync("ErrorMessageToClient", e.Message);
-        }
     }
-
-    public async Task StartRoundBlackjack(int bet)
+    public async Task StartRoundBlackjack( int bet)
     {
         var userClaim = this.Context.User.FindFirst("UserRepoConnect")?.Value;
         Guid.TryParse(userClaim, out var userId);
