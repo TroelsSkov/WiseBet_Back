@@ -2,6 +2,8 @@ using WiseBet.backend.Services.DTOs;
 using WiseBet.backend.Data;
 using WiseBet.backend.Services.Blackjack;
 using WiseBet.backend.IRepository;
+using System.Security.Claims;
+using Microsoft.AspNetCore.SignalR;
 
 namespace WiseBet.backend.Services;
 
@@ -9,11 +11,14 @@ public class BlackjackService : IBlackjackService
 {
     private Dictionary<Guid, GameState> _activeGames = new Dictionary<Guid, GameState>();
     private readonly UserAccountRepository _userRepo;
+    private readonly Func<IDeck> _deckFactory;
 
-    public BlackjackService(UserAccountRepository userRepo)
+    public BlackjackService(UserAccountRepository userRepo, Func<IDeck> deckFactory)
     {
         _userRepo = userRepo;
+        _deckFactory = deckFactory;
     }
+
     private int CalculateScoreDealer(Card card)
     {
         return card.Value;
@@ -52,14 +57,44 @@ public class BlackjackService : IBlackjackService
         };
     }
 
+    public async Task PlayBJRound(ISingleClientProxy caller, CancellationToken cancellationToken, Guid userID, int bet)
+    {
+        Console.WriteLine($"[BlackJackService] Has started!");
+
+        var dto = await StartRound(userID, bet);
+        await caller.SendAsync("UpdateClient", dto);
+        var nextAction = await caller.InvokeAsync<string>("NextAction", cancellationToken);
+        Console.WriteLine($"[BlackJackService] We saw the follwing from the user: {nextAction}");
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            dto = null;
+            if (nextAction == "hit")
+            {
+                dto = await Hit(userID);
+                await caller.SendAsync("UpdateClient", dto);
+                Console.WriteLine($"[BlackJackService] The player chose to hit");
+                if(dto.Status != GameStatus.Playing)
+                    return;
+            }
+            else if (nextAction == "stand")
+            {
+                dto = await Stand(userID);
+                await caller.SendAsync("UpdateClient", dto);
+                Console.WriteLine($"[BlackJackService] The player chose to stand");
+                return;
+            }
+            nextAction = await caller.InvokeAsync<string>("NextAction", cancellationToken);
+        }
+    }
+
+
     public async Task<BlackjackDto> StartRound(Guid id, int bet)
     {
         var user = await _userRepo.GetByIdAsync(id);
         user.Saldo -= bet;
         await _userRepo.PutAsync(id, user);
 
-
-        var gameState = new GameState();
+        var gameState = new GameState(_deckFactory());
         _activeGames[id] = gameState;
         gameState.Bet = bet;
         gameState.State = GameStatus.Playing;
@@ -106,6 +141,13 @@ public class BlackjackService : IBlackjackService
         var user = await _userRepo.GetByIdAsync(id);
 
         var gameState = _activeGames[id];
+        if (CalculateScore(gameState.DealerHand) == 21)
+        {
+            gameState.State = GameStatus.DealerWin;
+            _activeGames.Remove(id);
+            return BuildDto(gameState);
+        }
+
 
         while (CalculateScore(gameState.DealerHand) < 17)
         {

@@ -37,15 +37,14 @@ public class GameHub : Hub
             await Clients.Caller.SendAsync("ErrorMessageToClient", validate.Message);
             return;
         }
-
-        var result = await _coinflip.PlayRound(UserId, Amount, ChosenSide);
-
-        await Clients.Caller.SendAsync("UpdateClient", result);
+        await _coinflip.PlayRound(UserId, Amount, ChosenSide);
     }
-    public async Task StartRoundBlackjack(Guid UserId, int bet)
+    public async Task StartRoundBlackjack( int bet)
     {
-        Console.WriteLine($"[GameHub] PLayer information:\n   UserID: {UserId}\n   Amount: {bet}\n");
-        var validate = await _validate.ValidateBet(UserId, bet);
+        var userClaim = this.Context.User.FindFirst("UserRepoConnect")?.Value;
+        Guid.TryParse(userClaim, out var userId);
+        Console.WriteLine($"[GameHub] PLayer information:\n   UserID: {userId}\n   Amount: {bet}\n");
+        var validate = await _validate.ValidateBet(userId, bet);
 
         if (validate.Fail == true)
         {
@@ -54,36 +53,53 @@ public class GameHub : Hub
         }
         try
         {
-            var result = await _blackjack.StartRound(UserId, bet);
-            await Clients.Caller.SendAsync("UpdateClient", result);
+            CancellationToken cancellationToken = this.Context.ConnectionAborted;
+            await _blackjack.PlayBJRound(this.Clients.Caller, cancellationToken, userId, bet);
+            Console.WriteLine("[GameHub] The blackjack round concluded...");
         }
         catch (Exception e)
         {
             await Clients.Caller.SendAsync("ErrorMessageToClient", e.Message);
         }
     }
-    public async Task HitBlackjack(Guid UserId)
+    // public async Task HitBlackjack()
+    // {
+    //     var userClaim = this.Context.User?.FindFirst("UserRepoConnect")?.Value;
+    //     Guid.TryParse(userClaim, out var userId);
+    //     try
+    //     {
+    //         var result = await _blackjack.Hit(userId);
+    //         await Clients.Caller.SendAsync("UpdateClient", result);
+    //     }
+    //     catch (Exception e)
+    //     {
+    //         await Clients.Caller.SendAsync("ErrorMessageToClient", e.Message);
+    //     }
+    // }
+    // public async Task StandBlackjack()
+    // {
+    //     var userClaim = this.Context.User?.FindFirst("UserRepoConnect")?.Value;
+    //     Guid.TryParse(userClaim, out var userId);
+    //     try
+    //     {
+    //         var result = await _blackjack.Stand(userId);
+    //         await Clients.Caller.SendAsync("UpdateClient", result);
+    //     }
+    //     catch (Exception e)
+    //     {
+    //         await Clients.Caller.SendAsync("ErrorMessageToClient", e.Message);
+    //     }
+    // }
+
+    public override async Task OnConnectedAsync()
     {
-        try
-        {
-            var result = await _blackjack.Hit(UserId);
-            await Clients.Caller.SendAsync("UpdateClient", result);
-        }
-        catch (Exception e)
-        {
-            await Clients.Caller.SendAsync("ErrorMessageToClient", e.Message);
-        }
+        Console.WriteLine($"[Hub] Client connected: {this.Context.User?.FindFirst("UserRepoConnect")?.Value}");
+        await base.OnConnectedAsync();
     }
-    public async Task StandBlackjack(Guid UserId)
+
+    public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        try
-        {
-            var result = await _blackjack.Stand(UserId);
-            await Clients.Caller.SendAsync("UpdateClient", result);
-        }
-        catch (Exception e)
-        {
-            await Clients.Caller.SendAsync("ErrorMessageToClient", e.Message);
-        }
+        Console.WriteLine($"[GameHub] Player {this.Context.User?.FindFirst("UserRepoConnect")?.Value} has disconnected");
+        await base.OnDisconnectedAsync(exception);
     }
 }
