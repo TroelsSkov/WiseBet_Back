@@ -13,8 +13,6 @@ using NUnit.Framework.Internal;
 using WiseBet.backend.Hubs;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
-using Microsoft.Extensions.Configuration.UserSecrets;
-using System.Security.Claims;
 
 namespace Backend.DatabaseController.unit.tests.Hubs;
 
@@ -54,10 +52,10 @@ public class GameHubTest
             Context = mockContext
         };
     }
-    //This function makes it so that var UserIdString = this.Context.User.FindFirst("ID")?.Value; returns the test guid.
+
     private void MockUserContext(Guid UserId)
     {
-        var claims = new[] {new Claim("ID", UserId.ToString())};
+        var claims = new[] { new Claim("UserRepoConnect", UserId.ToString()) };
         var identity = new ClaimsIdentity(claims);
         var principal = new ClaimsPrincipal(identity);
 
@@ -79,12 +77,12 @@ public class GameHubTest
     {
         Guid userID = Guid.NewGuid();
         MockUserContext(userID);
-        var fail = new CoinFlipDTO {Fail = true, Message = "Mistake Found"};
+        var fail = new CoinFlipDTO { Fail = true, Message = "Mistake Found" };
         _Ivalidation.ValidateBet(userID, 100).Returns(fail);
         await _hub.PlayRound(100, CoinSide.Coin);
-        
-        await _Iproxy.Received().SendCoreAsync("ErrorMessageToClient", 
-        Arg.Is<object[]>(o => o[0].ToString() == "Mistake Found"),default);
+
+        await _Iproxy.Received().SendCoreAsync("ErrorMessageToClient",
+        Arg.Is<object[]>(o => o[0].ToString() == "Mistake Found"), default);
         await _Icoinflip.DidNotReceive().PlayRound(userID, 100, CoinSide.Coin);
     }
 
@@ -93,16 +91,16 @@ public class GameHubTest
     {
         Guid userID = Guid.NewGuid();
         MockUserContext(userID);
-        _Ivalidation.ValidateBet(userID, 100).Returns(new CoinFlipDTO{Fail = false, Message = "BetAccepted"});
-        
+        _Ivalidation.ValidateBet(userID, 100).Returns(new CoinFlipDTO { Fail = false, Message = "BetAccepted" });
+
         await _hub.PlayRound(100, CoinSide.Coin);
-        
+
         await _Icoinflip.Received().PlayRound(userID, 100, CoinSide.Coin);
     }
 
     // Blackjack tests
     [Test]
-    public async Task StartRoundBlackjack_ValidationFails_BetNotAccepted()
+    public async Task StartRoundBlackjack_ValidationFails_ErrorSentToClient()
     {
         var fail = new CoinFlipDTO { Fail = true, Message = "Mistake Found" };
         _Ivalidation.ValidateBet(_userID, 100).Returns(fail);
@@ -110,60 +108,56 @@ public class GameHubTest
         await _hub.StartRoundBlackjack(100);
 
         await _Iproxy.Received().SendCoreAsync("ErrorMessageToClient",
-        Arg.Is<object[]>(o => o[0].ToString() == "Mistake Found"), default);
-        await _Iblackjack.DidNotReceive().StartRound(_userID, 100);
+            Arg.Is<object[]>(o => o[0].ToString() == "Mistake Found"), default);
     }
 
     [Test]
-    public async Task StartRoundBlackjack_ValidationAccepts_ServiceIsCalled()
+    public async Task StartRoundBlackjack_ValidationFails_PlayBJRoundNotCalled()
     {
-        _Ivalidation.ValidateBet(_userID, 100).Returns(new CoinFlipDTO { Fail = false, Message = "" });
-        _Iblackjack.StartRound(_userID, 100).Returns(new BlackjackDto());
+        var fail = new CoinFlipDTO { Fail = true, Message = "Mistake Found" };
+        _Ivalidation.ValidateBet(_userID, 100).Returns(fail);
 
         await _hub.StartRoundBlackjack(100);
 
-        await _Iblackjack.Received().StartRound(_userID, 100);
+        await _Iblackjack.DidNotReceive().PlayBJRound(
+            Arg.Any<ISingleClientProxy>(),
+            Arg.Any<CancellationToken>(),
+            _userID,
+            100);
     }
 
     [Test]
-    public async Task HitBlackjack_ServiceIsCalled()
+    public async Task StartRoundBlackjack_ValidationAccepts_PlayBJRoundIsCalled()
     {
-        _Iblackjack.Hit(_userID).Returns(new BlackjackDto());
+        _Ivalidation.ValidateBet(_userID, 100).Returns(new CoinFlipDTO { Fail = false, Message = "" });
+        _Iblackjack.PlayBJRound(
+            Arg.Any<ISingleClientProxy>(),
+            Arg.Any<CancellationToken>(),
+            _userID,
+            100).Returns(Task.CompletedTask);
 
-        await _hub.HitBlackjack();
+        await _hub.StartRoundBlackjack(100);
 
-        await _Iblackjack.Received().Hit(_userID);
+        await _Iblackjack.Received().PlayBJRound(
+            Arg.Any<ISingleClientProxy>(),
+            Arg.Any<CancellationToken>(),
+            _userID,
+            100);
     }
 
     [Test]
-    public async Task HitBlackjack_ServiceThrows_ErrorSentToClient()
+    public async Task StartRoundBlackjack_ServiceThrows_ErrorSentToClient()
     {
-        _Iblackjack.Hit(_userID).Throws(new Exception("Fejl"));
+        _Ivalidation.ValidateBet(_userID, 100).Returns(new CoinFlipDTO { Fail = false, Message = "" });
+        _Iblackjack.PlayBJRound(
+            Arg.Any<ISingleClientProxy>(),
+            Arg.Any<CancellationToken>(),
+            _userID,
+            100).Throws(new Exception("Service fejl"));
 
-        await _hub.HitBlackjack();
+        await _hub.StartRoundBlackjack(100);
 
         await _Iproxy.Received().SendCoreAsync("ErrorMessageToClient",
-        Arg.Is<object[]>(o => o[0].ToString() == "Fejl"), default);
-    }
-
-    [Test]
-    public async Task StandBlackjack_ServiceIsCalled()
-    {
-        _Iblackjack.Stand(_userID).Returns(new BlackjackDto());
-
-        await _hub.StandBlackjack();
-
-        await _Iblackjack.Received().Stand(_userID);
-    }
-
-    [Test]
-    public async Task StandBlackjack_ServiceThrows_ErrorSentToClient()
-    {
-        _Iblackjack.Stand(_userID).Throws(new Exception("Fejl"));
-
-        await _hub.StandBlackjack();
-
-        await _Iproxy.Received().SendCoreAsync("ErrorMessageToClient",
-        Arg.Is<object[]>(o => o[0].ToString() == "Fejl"), default);
+            Arg.Is<object[]>(o => o[0].ToString() == "Service fejl"), default);
     }
 }

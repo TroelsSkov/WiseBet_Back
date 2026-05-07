@@ -37,6 +37,7 @@ public class GameHub : Hub
             await Clients.Caller.SendAsync("ErrorMessageToClient", validate.Message);
             return;
         }
+        await _coinflip.PlayRound(UserId, Amount, ChosenSide);
     }
     public async Task StartRoundBlackjack( int bet)
     {
@@ -61,34 +62,34 @@ public class GameHub : Hub
             await Clients.Caller.SendAsync("ErrorMessageToClient", e.Message);
         }
     }
-    public async Task HitBlackjack()
-    {
-        var userClaim = this.Context.User?.FindFirst("UserRepoConnect")?.Value;
-        Guid.TryParse(userClaim, out var userId);
-        try
-        {
-            var result = await _blackjack.Hit(userId);
-            await Clients.Caller.SendAsync("UpdateClient", result);
-        }
-        catch (Exception e)
-        {
-            await Clients.Caller.SendAsync("ErrorMessageToClient", e.Message);
-        }
-    }
-    public async Task StandBlackjack()
-    {
-        var userClaim = this.Context.User?.FindFirst("UserRepoConnect")?.Value;
-        Guid.TryParse(userClaim, out var userId);
-        try
-        {
-            var result = await _blackjack.Stand(userId);
-            await Clients.Caller.SendAsync("UpdateClient", result);
-        }
-        catch (Exception e)
-        {
-            await Clients.Caller.SendAsync("ErrorMessageToClient", e.Message);
-        }
-    }
+    // public async Task HitBlackjack()
+    // {
+    //     var userClaim = this.Context.User?.FindFirst("UserRepoConnect")?.Value;
+    //     Guid.TryParse(userClaim, out var userId);
+    //     try
+    //     {
+    //         var result = await _blackjack.Hit(userId);
+    //         await Clients.Caller.SendAsync("UpdateClient", result);
+    //     }
+    //     catch (Exception e)
+    //     {
+    //         await Clients.Caller.SendAsync("ErrorMessageToClient", e.Message);
+    //     }
+    // }
+    // public async Task StandBlackjack()
+    // {
+    //     var userClaim = this.Context.User?.FindFirst("UserRepoConnect")?.Value;
+    //     Guid.TryParse(userClaim, out var userId);
+    //     try
+    //     {
+    //         var result = await _blackjack.Stand(userId);
+    //         await Clients.Caller.SendAsync("UpdateClient", result);
+    //     }
+    //     catch (Exception e)
+    //     {
+    //         await Clients.Caller.SendAsync("ErrorMessageToClient", e.Message);
+    //     }
+    // }
 
     public override async Task OnConnectedAsync()
     {
