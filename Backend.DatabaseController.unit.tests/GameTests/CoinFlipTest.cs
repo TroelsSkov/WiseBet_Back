@@ -7,6 +7,7 @@ using NSubstitute;
 using WiseBet.backend.Services.DTOs;
 using NUnit.Framework.Internal;
 using System.Reflection;
+using WiseBet.backend.Hubs;
 namespace Backend.DatabaseController.unit.tests.Hubs;
 [TestFixture]
 public class CoinFlipTest
