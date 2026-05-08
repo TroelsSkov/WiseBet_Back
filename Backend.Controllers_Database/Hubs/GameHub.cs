@@ -37,7 +37,8 @@ public class GameHub : Hub
             await Clients.Caller.SendAsync("ErrorMessageToClient", validate.Message);
             return;
         }
-        await _coinflip.PlayRound(UserId, Amount, ChosenSide);
+        var result = await _coinflip.PlayRound(UserId, Amount, ChosenSide);
+        await Clients.Caller.SendAsync("UpdateClient", result);
     }
     public async Task StartRoundBlackjack( int bet)
     {
