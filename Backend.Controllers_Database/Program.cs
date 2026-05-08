@@ -27,7 +27,11 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSignalR();
 
 builder.Services.AddScoped<ICoinflipService, CoinFlipService>();
-builder.Services.AddScoped<IBlackjackService, BlackjackService>();
+builder.Services.AddScoped<IBlackjackService>(sp =>
+    new BlackjackService(
+        sp.GetRequiredService<UserAccountRepository>(),
+        () => new Deck()
+    ));
 builder.Services.AddScoped<IRouletteService, RouletteService>();
 builder.Services.AddScoped<IGeneralValidation, GeneralValidation>();
 builder.Services.AddHostedService<RouletteSessionTickService>();

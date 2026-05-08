@@ -32,8 +32,15 @@ public class GameHub : Hub
     private bool TryGetAuthenticatedUserId(out Guid userId)
     {
         userId = default;
-        var claim = Context.User?.FindFirst("UserRepoConnect")?.Value;
-        return !string.IsNullOrEmpty(claim) && Guid.TryParse(claim, out userId);
+        var principal = Context.User;
+        if (principal == null)
+            return false;
+
+        var candidate = principal.FindFirst("UserRepoConnect")?.Value
+            ?? principal.FindFirst(ClaimTypes.NameIdentifier)?.Value
+            ?? principal.FindFirst("sub")?.Value;
+
+        return !string.IsNullOrWhiteSpace(candidate) && Guid.TryParse(candidate, out userId);
     }
 
     public async Task PlayRound(int Amount, CoinSide ChosenSide)
