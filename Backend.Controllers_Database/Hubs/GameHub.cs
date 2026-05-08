@@ -86,7 +86,7 @@ public class GameHub : Hub
         }
         try
         {
-            var result = await _blackjack.StartRound(userId, bet);
+            var result = await _blackjack.PlayBJRound(userId, bet);
             await Clients.Caller.SendAsync("UpdateClient", result);
         }
         catch (Exception e)
