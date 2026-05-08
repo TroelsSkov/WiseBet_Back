@@ -19,6 +19,4 @@ WORKDIR /app
 # copy the build app from the build stage to the final stage
 COPY --from=build /app ./
 
-RUN find /app -type f
-
 ENTRYPOINT ["dotnet", "WiseBet.backend.dll"]
