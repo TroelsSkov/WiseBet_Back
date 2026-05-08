@@ -24,7 +24,8 @@ namespace WiseBet.backend.IRepository
                     ID = chat.ChatID,
                     UserId = chat.UserAccount.UserID,
                     Message = chat.chat,
-                    TimeOfChat = chat.TimeOfChat
+                    TimeOfChat = chat.TimeOfChat,
+                    UserName = chat.UserAccount.Username
                 });
             }
 
@@ -41,7 +42,8 @@ namespace WiseBet.backend.IRepository
                 ID = chat.ChatID,
                 UserId = chat.UserAccount.UserID,
                 Message = chat.chat,
-                TimeOfChat = chat.TimeOfChat
+                TimeOfChat = chat.TimeOfChat,
+                UserName = chat.UserAccount.Username
             };
         }
 ///
@@ -93,7 +95,8 @@ namespace WiseBet.backend.IRepository
                     ID = chat.ChatID,
                     UserId = chat.UserAccount.UserID,
                     Message = chat.chat,
-                    TimeOfChat = chat.TimeOfChat
+                    TimeOfChat = chat.TimeOfChat,
+                    UserName = chat.UserAccount.Username
                 });
             }
 
