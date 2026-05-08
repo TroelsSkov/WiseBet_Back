@@ -66,7 +66,8 @@ public class TestChatsRepository
             ID = Guid.NewGuid(),
             UserId = u2.ID,
             Message = "Hello World",
-            TimeOfChat = DateTime.Now
+            TimeOfChat = DateTime.Now,
+            UserName = "Poul"
         };
 
         Assert.DoesNotThrowAsync(async () => await m_uut.PostAsync(newChat));
@@ -80,7 +81,8 @@ public class TestChatsRepository
             ID = Guid.NewGuid(),
             UserId = u1.ID,
             Message = "Hello World",
-            TimeOfChat = DateTime.Now
+            TimeOfChat = DateTime.Now,
+            UserName = "Poul"
         };
 
         await m_uut.PostAsync(c1);
@@ -100,7 +102,8 @@ public class TestChatsRepository
             ID = Guid.NewGuid(),
             UserId = u2.ID,
             Message = "Hello World",
-            TimeOfChat = DateTime.Now
+            TimeOfChat = DateTime.Now,
+            UserName = "Poul"
         };
 
         Assert.DoesNotThrowAsync(async () => await m_uut.PostAsync(c1));
@@ -117,7 +120,8 @@ public class TestChatsRepository
             ID = Guid.NewGuid(),
             UserId = u1.ID,
             Message = "Hello World",
-            TimeOfChat = DateTime.Now
+            TimeOfChat = DateTime.Now,
+            UserName = "Poul"
         };
 
         await m_uut.PostAsync(c1);
@@ -130,7 +134,8 @@ public class TestChatsRepository
             ID = Guid.NewGuid(),
             UserId = u2.ID,
             Message = "Hello World",
-            TimeOfChat = DateTime.Now
+            TimeOfChat = DateTime.Now,
+            UserName = "Poul"
         };
 
         await m_uut.PostAsync(c2);
@@ -153,7 +158,9 @@ public class TestChatsRepository
             ID = Guid.NewGuid(),
             UserId = u1.ID,
             Message = "Hello World",
-            TimeOfChat = DateTime.Now
+            TimeOfChat = DateTime.Now,
+            UserName = "Poul"
+
         };
 
         await m_uut.PostAsync(c1);
@@ -174,7 +181,9 @@ public class TestChatsRepository
             ID = Guid.NewGuid(),
             UserId = u1.ID,
             Message = "Hello World",
-            TimeOfChat = DateTime.Now
+            TimeOfChat = DateTime.Now,
+            UserName = "Poul"
+
         };
 
         Assert.ThrowsAsync<WiseBet.backend.IRepository.KeyNotFoundException>(async () => await m_uut.PutAsync(c1.ID, c1));
@@ -188,7 +197,9 @@ public class TestChatsRepository
             ID = Guid.NewGuid(),
             UserId = u1.ID,
             Message = "Hello World",
-            TimeOfChat = DateTime.Now
+            TimeOfChat = DateTime.Now,
+            UserName = "Poul"
+
         };
 
         await m_uut.PostAsync(c1);
@@ -211,7 +222,9 @@ public class TestChatsRepository
             ID = Guid.NewGuid(),
             UserId = u1.ID,
             Message = "Hello World",
-            TimeOfChat = DateTime.Now
+            TimeOfChat = DateTime.Now,
+            UserName = "Poul"
+
         };
 
         Assert.ThrowsAsync<WiseBet.backend.IRepository.KeyNotFoundException>(async () => await m_uut.DeleteAsync(c1));
@@ -225,21 +238,27 @@ public class TestChatsRepository
             ID = Guid.NewGuid(),
             UserId = u1.ID,
             Message = "Hey Aske",
-            TimeOfChat = DateTime.Now
+            TimeOfChat = DateTime.Now,
+            UserName = "Poul"
+
         };
         ChatDto c2 = new ChatDto
         {
             ID = Guid.NewGuid(),
             UserId = u2.ID,
             Message = "Hey Katrine",
-            TimeOfChat = DateTime.Now
+            TimeOfChat = DateTime.Now,
+            UserName = "Poull"
+
         };
         ChatDto c3 = new ChatDto
         {
             ID = Guid.NewGuid(),
             UserId = u1.ID,
             Message = "Du lækker <3",
-            TimeOfChat = DateTime.Now
+            TimeOfChat = DateTime.Now,
+            UserName = "Poulll"
+
         };
 
         await m_uut.PostAsync(c1);
