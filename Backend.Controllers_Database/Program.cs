@@ -2,14 +2,13 @@ using WiseBet.backend.Data;
 using WiseBet.backend.Configs;
 using Scalar.AspNetCore;
 using WiseBet.backend.Hubs;
-using WiseBet.backend.Services;
-using Microsoft.Extensions.Options;
-using WiseBet.backend.IRepository;
 using WiseBet.backend.Services.Blackjack;
-using WiseBet.backend.Models;
+using WiseBet.backend.Services.Roulette;
+using WiseBet.backend.Services.Coinflip;
+using WiseBet.backend.Services.Coinflip.Validation;
+using WiseBet.backend.IRepository;
 
 var builder = WebApplication.CreateBuilder(args);
-var FrontEndUrl = builder.Configuration.GetValue<string>("FrontendSettings:baseUrl");
 builder.Services.AddDbContext<DatabaseContext>(); // Configurationen sker i DatabaseContext.cs
 
 builder.Services.AddControllers();
@@ -18,19 +17,25 @@ builder.Services.AddControllers();
 
 builder.Services.AddCustomSecurityService();
 
+builder.Services.AddScoped<RoundRepository>();
+builder.Services.AddScoped<BetRepository>();
+builder.Services.AddScoped<UserAccountRepository>();
+builder.Services.AddSingleton<RouletteSessionStore>();
+
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSignalR();
-// builder.Services.AddScoped<ICoinflipService, CoinFlipService>().AddScoped<UserAccountRepository>();
+
+builder.Services.AddScoped<ICoinflipService, CoinFlipService>();
 builder.Services.AddScoped<IBlackjackService>(sp =>
     new BlackjackService(
         sp.GetRequiredService<UserAccountRepository>(),
         () => new Deck()
     ));
-
-builder.Services.AddScoped<ICoinflipService, CoinFlipService>().AddScoped<UserAccountRepository>().AddScoped<BetRepository>().AddScoped<RoundRepository>();
-// builder.Services.AddSingleton<IBlackjackService, BlackjackService>().AddScoped<UserAccountRepository>();
+builder.Services.AddScoped<IRouletteService, RouletteService>();
 builder.Services.AddScoped<IGeneralValidation, GeneralValidation>();
+builder.Services.AddHostedService<RouletteSessionTickService>();
+
 builder.Services.AddCors(Options =>
 {
     Options.AddPolicy("FrontEndPolicy", policy =>
@@ -53,12 +58,11 @@ app.MapControllers();
 
 using (var scope = app.Services.CreateScope())
 {
-    var services = scope.ServiceProvider;
-    var context = new DatabaseContext();
+    var context = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
     var seed = new DataSeed(context);
-    seed.Seed();
+    await seed.SeedAsync();
 }
 
 
-app.MapHub<GameHub>("/GameHub");
+app.MapHub<GameHub>("/GameHub").RequireCors("FrontEndPolicy");
 app.Run();

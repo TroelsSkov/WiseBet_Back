@@ -5,7 +5,7 @@ using WiseBet.backend.IRepository;
 using System.Security.Claims;
 using Microsoft.AspNetCore.SignalR;
 
-namespace WiseBet.backend.Services;
+namespace WiseBet.backend.Services.Blackjack;
 
 public class BlackjackService : IBlackjackService
 {
