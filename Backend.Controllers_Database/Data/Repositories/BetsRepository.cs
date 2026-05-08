@@ -74,10 +74,15 @@ namespace WiseBet.backend.IRepository
 
         public async Task<List<BetDto>> GetAllBetsForRound(Guid id)
         {
-            var bets = await context.BetHistories.Where(b => b.RoundID == id).ToListAsync();
+            var bets = await context.BetHistories
+                .Where(b => b.RoundID == id)
+                .Include(b => b.OutcomeBet)
+                .ToListAsync();
+
             List<BetDto> toRet = new();
             foreach (var bet in bets)
                 toRet.Add(CreateBetDtoFromBetHistory(bet));
+
             return toRet;
         }
 

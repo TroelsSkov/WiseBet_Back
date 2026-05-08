@@ -3,7 +3,7 @@ using WiseBet.backend.Services.Blackjack;
 using WiseBet.backend.Data;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.SignalR;
-namespace WiseBet.backend.Services;
+namespace WiseBet.backend.Services.Blackjack;
 
 public interface IBlackjackService
 {

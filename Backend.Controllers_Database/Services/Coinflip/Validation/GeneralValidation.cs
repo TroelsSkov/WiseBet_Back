@@ -3,7 +3,7 @@ using WiseBet.backend.IRepository;
 using WiseBet.backend.DTOs;
 using WiseBet.backend.Data;
 using System.Net;
-namespace WiseBet.backend.Services;
+namespace WiseBet.backend.Services.Coinflip.Validation;
 
 public class GeneralValidation : IGeneralValidation
 {
