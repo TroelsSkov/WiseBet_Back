@@ -86,8 +86,9 @@ public class GameHub : Hub
         }
         try
         {
-            var result = await _blackjack.PlayBJRound(userId, bet);
-            await Clients.Caller.SendAsync("UpdateClient", result);
+            CancellationToken cancellationToken = this.Context.ConnectionAborted;
+            await _blackjack.PlayBJRound(this.Clients.Caller, cancellationToken, userId, bet);
+            Console.WriteLine("[GameHub] The blackjack round concluded...");
         }
         catch (Exception e)
         {
