@@ -29,6 +29,12 @@ namespace WiseBet.backend.IRepository
             BetDto toRet = CreateBetDtoFromBetHistory(bet);
             return toRet;
         }
+        // public override async Task PostAsync(BetHistory BetEntity)
+        // {
+        //     await context.BetHistories.AddAsync(BetEntity);
+        //     await context.SaveChangesAsync();
+        // }
+        
 
         public override async Task PostAsync(BetDto dto)
         {
@@ -36,6 +42,7 @@ namespace WiseBet.backend.IRepository
             await context.BetHistories.AddAsync(toAdd);
             await context.SaveChangesAsync();
         }
+
         /// <summary>
         /// Denne funktion ændrer indsats beløbet og ingen andre aspekter af indsats.
         /// </summary>
