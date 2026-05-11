@@ -1,4 +1,3 @@
-# syntax=docker/dockerfile:1.7
 # multi-stage dockerfile
 
 # build stage/image
@@ -7,8 +6,9 @@ WORKDIR /source
 
 # copy csproj and restore as distinct layers
 COPY *.slnx ./
-# move csproj files to the root
-COPY --parents **/*.csproj ./ 
+# copy csproj files preserving directory structure
+COPY Backend.Controllers_Database/WiseBet.backend.csproj Backend.Controllers_Database/
+COPY Backend.DatabaseController.unit.tests/Backend.DatabaseController.unit.tests.csproj Backend.DatabaseController.unit.tests/
 RUN dotnet restore 
 # copy everything else and build app
 COPY . .
